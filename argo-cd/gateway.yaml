@@ -1,0 +1,38 @@
+# Certificate and HTTPRoute for the Argo CD UI.
+# The Certificate is issued by the local CA in the "gateway" namespace,
+# and the HTTPRoute binds the Argo CD server to the Envoy Gateway listener.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-cert
+  namespace: gateway
+spec:
+  secretName: argocd-tls
+  dnsNames:
+  - argocd.k8s.orb.local
+  issuerRef:
+    name: local-ca-issuer
+    kind: Issuer
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd-ui
+  namespace: argocd
+spec:
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: argo-gateway
+    namespace: gateway
+    sectionName: argocd
+  hostnames:
+  - argocd.k8s.orb.local
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: argocd-server
+      port: 80

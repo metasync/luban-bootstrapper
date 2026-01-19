@@ -1,0 +1,79 @@
+# Gateway namespace and local CA setup.
+# This creates a local CA used by cert-manager to issue TLS certificates
+# for the Argo UIs exposed through Envoy Gateway.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gateway
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: local-selfsigned
+  namespace: gateway
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: local-ca
+  namespace: gateway
+spec:
+  isCA: true
+  commonName: local-ca
+  secretName: local-ca-root
+  issuerRef:
+    name: local-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: local-ca-issuer
+  namespace: gateway
+spec:
+  ca:
+    secretName: local-ca-root
+---
+# Envoy GatewayClass and Gateway for HTTPS entrypoints
+# to Argo Workflows and Argo CD.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: argo-gateway
+  namespace: gateway
+spec:
+  gatewayClassName: envoy
+  listeners:
+  - name: argo-workflows
+    protocol: HTTPS
+    port: 443
+    hostname: argo-workflows.k8s.orb.local
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: argo-workflows-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: argocd
+    protocol: HTTPS
+    port: 443
+    hostname: argocd.k8s.orb.local
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: argocd-tls
+    allowedRoutes:
+      namespaces:
+        from: All

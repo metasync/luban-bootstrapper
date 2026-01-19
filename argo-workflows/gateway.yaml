@@ -1,0 +1,38 @@
+# Certificate and HTTPRoute for the Argo Workflows UI.
+# The Certificate is issued by the local CA in the "gateway" namespace,
+# and the HTTPRoute binds the Argo server to the Envoy Gateway listener.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argo-workflows-cert
+  namespace: gateway
+spec:
+  secretName: argo-workflows-tls
+  dnsNames:
+  - argo-workflows.k8s.orb.local
+  issuerRef:
+    name: local-ca-issuer
+    kind: Issuer
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argo-workflows-ui
+  namespace: argo
+spec:
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: argo-gateway
+    namespace: gateway
+    sectionName: argo-workflows
+  hostnames:
+  - argo-workflows.k8s.orb.local
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: argo-server
+      port: 2746

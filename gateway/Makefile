@@ -1,6 +1,9 @@
 include ../Makefile.env
 
 # Gateway namespace, local CA and Envoy Gateway resources.
+# This Makefile manages the core Gateway API resources, including the GatewayClass,
+# Gateway, and a local Certificate Authority (CA) for issuing TLS certificates.
+
 .PHONY: install uninstall
 
 install:

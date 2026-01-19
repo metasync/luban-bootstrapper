@@ -1,19 +1,20 @@
 include ../Makefile.env
 
-# Envoy Gateway installation using the upstream install manifest.
+# Envoy Gateway installation from helm chart
+# Installs Envoy Gateway using the official OCI Helm chart.
 
-ENVOY_GATEWAY_INSTALL_URL ?= https://github.com/envoyproxy/gateway/releases/download/v$(ENVOY_GATEWAY_VERSION)/install.yaml
+ENVOY_GATEWAY_CHART_URL ?= oci://docker.io/envoyproxy/gateway-helm
 
 .PHONY: install uninstall
 
 install:
-	@echo "Installing Envoy Gateway v$(ENVOY_GATEWAY_VERSION)..."
-	@$(KUBECTL) apply --server-side -f $(ENVOY_GATEWAY_INSTALL_URL)
-	@echo "Waiting for Envoy Gateway to be ready..."
-	@$(KUBECTL) wait -n $(ENVOY_GATEWAY_NAMESPACE) deployment/envoy-gateway --for=condition=Available --timeout=5m
+	@echo "=== Installing Envoy Gateway ==="
+	helm upgrade --install eg $(ENVOY_GATEWAY_CHART_URL) \
+		--version v$(ENVOY_GATEWAY_CHART_VERSION) \
+		--namespace $(ENVOY_GATEWAY_NAMESPACE) \
+		--create-namespace \
+		--wait
 
 uninstall:
-	@echo "Uninstalling Envoy Gateway..."
-	@$(KUBECTL) delete --server-side -f $(ENVOY_GATEWAY_INSTALL_URL) || true
-	@echo "Deleting namespace $(ENVOY_GATEWAY_NAMESPACE)..."
-	@$(KUBECTL) delete namespace $(ENVOY_GATEWAY_NAMESPACE) --ignore-not-found=true || true
+	@echo "=== Uninstalling Envoy Gateway ==="
+	helm uninstall eg --namespace $(ENVOY_GATEWAY_NAMESPACE)

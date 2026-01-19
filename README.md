@@ -26,19 +26,19 @@ they are provisioned via the Makefiles.
 
 - [Makefile](./Makefile): root orchestration, infra-first install order
 - [Makefile.env](./Makefile.env): shared versions and environment variables
-- [cert-manager/](./cert-manager/): cert-manager install/uninstall
-- [envoy-gateway/](./envoy-gateway/): Envoy Gateway install/uninstall
+- [cert-manager/](./cert-manager/): cert-manager install/uninstall (Helm)
+- [envoy-gateway/](./envoy-gateway/): Envoy Gateway install/uninstall (Helm OCI)
 - [gateway/](./gateway/):
   - [Makefile](./gateway/Makefile): apply/delete gateway resources
   - [resources.yaml](./gateway/resources.yaml): GatewayClass, Gateway, local CA
 - [argo-workflows/](./argo-workflows/):
-  - [Makefile](./argo-workflows/Makefile): Argo Workflows install/uninstall
+  - [Makefile](./argo-workflows/Makefile): Argo Workflows install/uninstall (Helm)
   - [gateway.yaml](./argo-workflows/gateway.yaml): Certificate + HTTPRoute
 - [argo-cd/](./argo-cd/):
-  - [Makefile](./argo-cd/Makefile): Argo CD install/uninstall
+  - [Makefile](./argo-cd/Makefile): Argo CD install/uninstall (Helm)
   - [gateway.yaml](./argo-cd/gateway.yaml): Certificate + HTTPRoute
-- [argo-events/](./argo-events/Makefile): Argo Events install/uninstall
-- [kpack/](./kpack/Makefile): kpack install/uninstall
+- [argo-events/](./argo-events/Makefile): Argo Events install/uninstall (Helm)
+- [kpack/](./kpack/Makefile): kpack install/uninstall (Raw Manifests)
 
 ## Configuration
 

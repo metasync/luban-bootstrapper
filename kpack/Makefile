@@ -1,6 +1,8 @@
 include ../Makefile.env
 
 # kpack installation for image building.
+# kpack does not have an official Helm chart, so we install it via raw manifests
+# from the release page.
 
 KPACK_RELEASE_URL ?= https://github.com/buildpacks-community/kpack/releases/download/v$(KPACK_VERSION)/release-$(KPACK_VERSION).yaml
 

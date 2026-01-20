@@ -23,6 +23,6 @@ install:
 
 uninstall:
 	@echo "Uninstalling cert-manager..."
-	@helm uninstall cert-manager -n $(CERT_MANAGER_NAMESPACE)
+	@helm uninstall cert-manager -n $(CERT_MANAGER_NAMESPACE) || true
 	@echo "Deleting namespace $(CERT_MANAGER_NAMESPACE)..."
 	@$(KUBECTL) delete namespace $(CERT_MANAGER_NAMESPACE) --ignore-not-found=true || true

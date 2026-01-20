@@ -29,7 +29,7 @@ install:
 	@$(KUBECTL) apply -f gateway.yaml
 	@POD=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get pod -l app.kubernetes.io/name=argo-workflows-server --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}'); \
 	echo "Creating/updating argo-workflows-token secret in namespace $(ARGO_WORKFLOWS_NAMESPACE)"; \
-	TOKEN=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) exec $$POD -c server -- argo auth token); \
+	TOKEN=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) exec $$POD -c argo-server -- argo auth token); \
 	$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) create secret generic argo-workflows-token --from-literal=token="$$TOKEN" --dry-run=client -o yaml | $(KUBECTL) apply -f -
 
 get-token:
@@ -39,8 +39,8 @@ get-token:
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."
-	@$(KUBECTL) delete -f gateway.yaml || true
+	@$(KUBECTL) delete -f gateway.yaml --ignore-not-found=true || true
 	@echo "Uninstalling Argo Workflows..."
-	@helm uninstall argo-workflows -n $(ARGO_WORKFLOWS_NAMESPACE)
+	@helm uninstall argo-workflows -n $(ARGO_WORKFLOWS_NAMESPACE) || true
 	@echo "Deleting namespace $(ARGO_WORKFLOWS_NAMESPACE)..."
 	@$(KUBECTL) delete namespace $(ARGO_WORKFLOWS_NAMESPACE) --ignore-not-found=true || true

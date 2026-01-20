@@ -1,83 +1,81 @@
-# Luban Kubernetes Tooling
+# Luban Kubernetes Bootstrapper for CI/CD Tools
 
-This repository provides Makefile-based tooling to install and manage a
-small GitOps and workflow stack on a Kubernetes cluster. It focuses on:
+This repository provides Makefile-based tooling to install and manage a comprehensive GitOps and workflow stack on a Kubernetes cluster. It is optimized for local development using **OrbStack** on macOS, but can be adapted for other environments.
 
-- **Argo Workflows** for workflow orchestration
-- **Argo CD** for GitOps application delivery
-- **Argo Events** for event-driven workflows
-- **kpack** for container image builds
-- **Envoy Gateway + Gateway API** for ingress
-- **cert-manager** for TLS certificates with a local CA
+The stack includes:
 
-The setup is tailored for local development on an OrbStack Kubernetes
-cluster, using the base domain `k8s.orb.local`.
+- **Argo Workflows** (Workflow orchestration)
+- **Argo CD** (GitOps application delivery)
+- **Argo Events** (Event-driven dependency manager)
+- **kpack** (Cloud Native Buildpacks for Kubernetes)
+- **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
+- **cert-manager** (TLS certificate management with a local CA)
 
 ## Prerequisites
 
-- A Kubernetes cluster (tested with OrbStack)
-- `kubectl` configured to point to the cluster
-- Internet access to pull manifests from GitHub
+- **macOS** (Optimized for `base64 -D` and OrbStack domains)
+- **Kubernetes Cluster** (Tested with [OrbStack](https://orbstack.dev/))
+- **Internet Access** (To pull Helm charts and container images)
 
-You do **not** need to install Envoy Gateway or cert-manager manually;
-they are provisioned via the Makefiles.
+The following CLI tools can be installed automatically via `make cli`:
+- `kubectl`
+- `helm`
+- `pack`
 
 ## Layout
 
-- [Makefile](./Makefile): root orchestration, infra-first install order
-- [Makefile.env](./Makefile.env): shared versions and environment variables
-- [cert-manager/](./cert-manager/): cert-manager install/uninstall (Helm)
-- [envoy-gateway/](./envoy-gateway/): Envoy Gateway install/uninstall (Helm OCI)
-- [gateway/](./gateway/):
-  - [Makefile](./gateway/Makefile): apply/delete gateway resources
-  - [resources.yaml](./gateway/resources.yaml): GatewayClass, Gateway, local CA
-- [argo-workflows/](./argo-workflows/):
-  - [Makefile](./argo-workflows/Makefile): Argo Workflows install/uninstall (Helm)
-  - [gateway.yaml](./argo-workflows/gateway.yaml): Certificate + HTTPRoute
-- [argo-cd/](./argo-cd/):
-  - [Makefile](./argo-cd/Makefile): Argo CD install/uninstall (Helm)
-  - [gateway.yaml](./argo-cd/gateway.yaml): Certificate + HTTPRoute
-- [argo-events/](./argo-events/Makefile): Argo Events install/uninstall (Helm)
-- [kpack/](./kpack/Makefile): kpack install/uninstall (Raw Manifests)
+- **[Makefile](./Makefile)**: Root orchestration. Installs infrastructure first, then applications.
+- **[Makefile.env](./Makefile.env)**: Shared configuration (versions, namespaces, domains).
+- **[cli/](./cli/)**: CLI installation logic (pack, helm, kubectl).
+- **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config.
+- **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
+- **[argo-events/](./argo-events/)**: Argo Events Helm install.
+- **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
+- **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
+- **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
+- **[kpack/](./kpack/)**: kpack raw manifest install.
 
 ## Configuration
 
-Shared configuration lives in [Makefile.env](./Makefile.env):
+Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
 
-- Component versions (Argo, Argo CD, Argo Events, kpack, Envoy Gateway,
-  cert-manager)
-- Component namespaces
-- Base domain and hostnames:
+- **Component Versions**:
+  - Argo Workflows (App v3.7.7)
+  - Argo CD (App v3.2.5)
+  - Argo Events (App v1.9.9)
+  - kpack (v0.17.1)
+  - Envoy Gateway (v1.6.2)
+  - cert-manager (v1.19.2)
+- **CLI Versions**:
+  - Helm (v4.0.5)
+  - Kubectl (v1.35.0)
+  - Pack (v0.39.1)
+- **Namespaces**: Define where each component is installed.
+- **Domains**:
   - `K8S_DOMAIN` (default: `k8s.orb.local`)
-  - `ARGO_WORKFLOWS_HOST` (`argo-workflows.${K8S_DOMAIN}`)
-  - `ARGO_CD_HOST` (`argocd.${K8S_DOMAIN}`)
+  - `ARGO_WORKFLOWS_HOST` (`argo-workflows.k8s.orb.local`)
+  - `ARGO_CD_HOST` (`argocd.k8s.orb.local`)
 
-The hostnames in `gateway/resources.yaml`, `argo-workflows/gateway.yaml`
-and `argo-cd/gateway.yaml` are currently set for `k8s.orb.local`. If you
-change `K8S_DOMAIN`, update those YAML files to match.
+## Installation
 
-## Installing the stack
+### 1. Install CLIs
 
-The root [Makefile](./Makefile) installs infrastructure first, followed
-by applications.
+Ensure you have the necessary tools installed:
 
-Install everything:
+```bash
+make cli
+```
+Or install them individually: `make helm-cli`, `make kubectl-cli`, `make pack-cli`.
+
+### 2. Install the Stack
+
+To install infrastructure (Cert Manager, Envoy Gateway) and all applications:
 
 ```bash
 make all
 ```
 
-This runs, in order:
-
-1. `make cert-manager`
-2. `make envoy-gateway`
-3. `make gateway`
-4. `make argo-workflows`
-5. `make argo-cd`
-6. `make argo-events`
-7. `make kpack`
-
-You can also install pieces individually, for example:
+Or install components individually:
 
 ```bash
 make cert-manager envoy-gateway gateway
@@ -87,82 +85,68 @@ make argo-cd
 
 ## Accessing the UIs
 
-After a full install:
+The stack uses Envoy Gateway to expose UIs via HTTPS.
 
-- Argo Workflows UI:
-  - URL: `https://argo-workflows.k8s.orb.local`
-- Argo CD UI:
-  - URL: `https://argocd.k8s.orb.local`
+| Component | URL | Notes |
+|-----------|-----|-------|
+| **Argo Workflows** | `https://argo-workflows.k8s.orb.local` | Requires Token |
+| **Argo CD** | `https://argocd.k8s.orb.local` | User: `admin` |
 
-TLS is terminated at the `argo-gateway` Gateway. Backend services
-(`argo-server`, `argocd-server`) are configured to serve HTTP only.
+### Authentication
 
-### Local CA and browser trust
+**Argo Workflows:**
+The installation generates a `workflow-runner` service account and a token secret. To retrieve the token for login:
 
-cert-manager issues leaf certificates using a local CA:
+```bash
+make -C argo-workflows get-token
+```
+Copy the output and paste it into the UI login prompt.
 
-- The root CA is defined by the `local-ca` Certificate in the
-  `gateway` namespace.
-- The corresponding secret is `local-ca-root`.
-- The issuer `local-ca-issuer` signs the Argo Workflows and Argo CD
-  certificates.
+**Argo CD:**
+To retrieve the initial `admin` password:
 
-To get rid of browser warnings, you can:
+```bash
+make -C argo-cd get-password
+```
 
-1. Extract the CA certificate from `local-ca-root`:
-   - `kubectl get secret local-ca-root -n gateway -o jsonpath='{.data.ca\.crt}' | base64 -D > local-ca.crt`
-2. Import `local-ca.crt` into your OS/browser trust store.
+### DNS & TLS
+
+- **DNS**: OrbStack automatically resolves `*.k8s.orb.local` to your cluster's LoadBalancer. If not using OrbStack, add entries to `/etc/hosts`.
+- **TLS**: A local CA is generated in the `gateway` namespace.
+  - To trust the CA, extract the certificate:
+    ```bash
+    kubectl get secret local-ca-root -n gateway -o jsonpath='{.data.ca\.crt}' | base64 -D > local-ca.crt
+    ```
+  - Import `local-ca.crt` into your Keychain / Browser trust store.
 
 ## Verification
 
-To verify that Argo Workflows is functioning correctly, you can submit a simple "hello-world" workflow.
-The installation configures a default `workflow-runner` service account with necessary permissions, so no extra setup is required.
+**Argo Workflows:**
+Submit a "Hello World" workflow:
 
 ```bash
-# Replace v3.7.7 with your installed Argo Workflows version
+# Submit a workflow using the installed version examples
 kubectl -n argo create -f https://github.com/argoproj/argo-workflows/raw/v3.7.7/examples/hello-world.yaml
-```
 
-Check the status of the workflow:
-
-```bash
+# Check status
 kubectl -n argo get workflows
 ```
 
-You should see a workflow with a status of `Succeeded`.
+**Argo CD:**
+Login to the UI and check that the status is "Healthy".
 
 ## Uninstalling
 
-To remove everything (applications and infrastructure):
+To remove everything (apps, infra, and namespaces):
 
 ```bash
 make uninstall
 ```
 
-This:
+This target ensures a clean slate by removing namespaces (`argo`, `argocd`, `envoy-gateway-system`, etc.) to prevent issues with lingering resources.
 
-1. Uninstalls Argo Workflows, Argo CD, Argo Events, kpack
-2. Removes Gateway resources and local CA
-3. Uninstalls Envoy Gateway and cert-manager
+## Troubleshooting
 
-You can also call the specific uninstall targets shown by:
-
-```bash
-make help
-```
-
-## Notes and customization
-
-- To pin different component versions, edit [Makefile.env](./Makefile.env).
-- If you change namespaces, make sure:
-  - The namespace variables in `Makefile.env` are updated.
-  - The namespaces in `argo-workflows/gateway.yaml` and
-    `argo-cd/gateway.yaml` match.
-- If you change the base domain, update:
-  - `K8S_DOMAIN`, `ARGO_WORKFLOWS_HOST`, `ARGO_CD_HOST` in
-    [Makefile.env](./Makefile.env)
-  - The `hostname` and `hostnames` fields in:
-    - [gateway/resources.yaml](./gateway/resources.yaml)
-    - [argo-workflows/gateway.yaml](./argo-workflows/gateway.yaml)
-    - [argo-cd/gateway.yaml](./argo-cd/gateway.yaml)
-
+- **Namespace Stuck Terminating**: The uninstall targets attempt to force delete, but if a namespace is stuck, check for lingering finalizers on resources.
+- **Gateway Not Ready**: Ensure `cert-manager` is fully installed before installing `gateway`. The `make gateway` target includes a wait check for the cert-manager webhook.
+- **Browser Warnings**: This is expected with a self-signed local CA. Follow the "TLS" section above to trust the CA.

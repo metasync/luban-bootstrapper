@@ -20,6 +20,6 @@ install:
 
 uninstall:
 	@echo "Uninstalling Argo Events..."
-	@helm uninstall argo-events -n $(ARGO_EVENTS_NAMESPACE)
+	@helm uninstall argo-events -n $(ARGO_EVENTS_NAMESPACE) || true
 	@echo "Deleting namespace $(ARGO_EVENTS_NAMESPACE)..."
 	@$(KUBECTL) delete namespace $(ARGO_EVENTS_NAMESPACE) --ignore-not-found=true || true

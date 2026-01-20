@@ -9,8 +9,15 @@ RESET := \033[0m
 # Root orchestration Makefile.
 # Installs shared infrastructure first (cert-manager, Envoy Gateway, Gateway)
 # and then application components (Argo Workflows, Argo CD, Argo Events, kpack).
+# Also provides targets to install necessary CLIs (pack, helm, kubectl).
 
-.PHONY: help all cert-manager envoy-gateway gateway argo-workflows argo-cd argo-events kpack uninstall uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack
+.PHONY: help all \
+	cert-manager envoy-gateway gateway \
+	argo-workflows argo-cd argo-events kpack \
+	cli pack-cli helm-cli kubectl-cli \
+	uninstall \
+	uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway \
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -22,6 +29,10 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-cd" "Install Argo CD (Chart $(ARGO_CD_CHART_VERSION)) into namespace $(ARGO_CD_NAMESPACE)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-events" "Install Argo Events (Chart $(ARGO_EVENTS_CHART_VERSION)) into namespace $(ARGO_EVENTS_NAMESPACE)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kpack" "Install kpack ($(KPACK_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make pack-cli" "Install pack CLI (v$(PACK_CLI_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make helm-cli" "Install Helm CLI (v$(HELM_CLI_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubectl-cli" "Install Kubectl CLI (v$(KUBECTL_CLI_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, helm, kubectl)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall" "Uninstall all components and infra"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
@@ -37,6 +48,9 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_CHART_VERSION" "Argo CD chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_CHART_VERSION" "Argo Events chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KPACK_VERSION" "kpack version tag"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "PACK_CLI_VERSION" "pack CLI version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HELM_CLI_VERSION" "Helm CLI version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBECTL_CLI_VERSION" "Kubectl CLI version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_NAMESPACE" "Namespace for Argo Workflows"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_NAMESPACE" "Namespace for Argo CD"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_NAMESPACE" "Namespace for Argo Events"
@@ -86,6 +100,22 @@ kpack:
 	@echo "=== Installing kpack ==="
 	@$(MAKE) -C kpack install
 
+cli:
+	@echo "=== Installing all CLIs ==="
+	@$(MAKE) -C cli install-all-cli
+
+pack-cli:
+	@echo "=== Installing pack CLI ==="
+	@$(MAKE) -C cli install-pack-cli
+
+helm-cli:
+	@echo "=== Installing Helm CLI ==="
+	@$(MAKE) -C cli install-helm-cli
+
+kubectl-cli:
+	@echo "=== Installing Kubectl CLI ==="
+	@$(MAKE) -C cli install-kubectl-cli
+
 uninstall: uninstall-argo-workflows \
 	uninstall-argo-cd \
 	uninstall-argo-events \
@@ -121,3 +151,7 @@ uninstall-argo-events:
 uninstall-kpack:
 	@echo "=== Uninstalling kpack ==="
 	@$(MAKE) -C kpack uninstall
+
+prune:
+	@${CONTAINER_CLI} image prune -f
+clean: prune

@@ -9,7 +9,7 @@ ENVOY_GATEWAY_CHART_URL ?= oci://docker.io/envoyproxy/gateway-helm
 
 install:
 	@echo "=== Installing Envoy Gateway ==="
-	helm upgrade --install eg $(ENVOY_GATEWAY_CHART_URL) \
+	@helm upgrade --install eg $(ENVOY_GATEWAY_CHART_URL) \
 		--version v$(ENVOY_GATEWAY_CHART_VERSION) \
 		--namespace $(ENVOY_GATEWAY_NAMESPACE) \
 		--create-namespace \
@@ -17,4 +17,6 @@ install:
 
 uninstall:
 	@echo "=== Uninstalling Envoy Gateway ==="
-	helm uninstall eg --namespace $(ENVOY_GATEWAY_NAMESPACE)
+	@helm uninstall eg --namespace $(ENVOY_GATEWAY_NAMESPACE) || true
+	@echo "Deleting namespace $(ENVOY_GATEWAY_NAMESPACE)..."
+	@$(KUBECTL) delete namespace $(ENVOY_GATEWAY_NAMESPACE) --ignore-not-found=true || true

@@ -26,10 +26,15 @@ install:
 	@echo "Applying Gateway configuration..."
 	@$(KUBECTL) apply -f gateway.yaml
 
+get-password:
+	@echo "Retrieving initial admin password from secret argocd-initial-admin-secret..."
+	@$(KUBECTL) -n $(ARGO_CD_NAMESPACE) get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -D
+	@echo ""
+
 uninstall:
 	@echo "Uninstalling Gateway configuration..."
-	@$(KUBECTL) delete -f gateway.yaml || true
+	@$(KUBECTL) delete -f gateway.yaml --ignore-not-found=true || true
 	@echo "Uninstalling Argo CD..."
-	@helm uninstall argo-cd -n $(ARGO_CD_NAMESPACE)
+	@helm uninstall argo-cd -n $(ARGO_CD_NAMESPACE) || true
 	@echo "Deleting namespace $(ARGO_CD_NAMESPACE)..."
 	@$(KUBECTL) delete namespace $(ARGO_CD_NAMESPACE) --ignore-not-found=true || true

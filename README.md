@@ -21,12 +21,13 @@ The following CLI tools can be installed automatically via `make cli`:
 - `kubectl`
 - `helm`
 - `pack`
+- `kp`
 
 ## Layout
 
 - **[Makefile](./Makefile)**: Root orchestration. Installs infrastructure first, then applications.
 - **[Makefile.env](./Makefile.env)**: Shared configuration (versions, namespaces, domains).
-- **[cli/](./cli/)**: CLI installation logic (pack, helm, kubectl).
+- **[cli/](./cli/)**: CLI installation logic (pack, kp, helm, kubectl).
 - **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config.
 - **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
 - **[argo-events/](./argo-events/)**: Argo Events Helm install.
@@ -50,6 +51,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Helm (v4.0.5)
   - Kubectl (v1.35.0)
   - Pack (v0.39.1)
+  - kp (v0.13.1)
 - **Namespaces**: Define where each component is installed.
 - **Domains**:
   - `K8S_DOMAIN` (default: `k8s.orb.local`)
@@ -65,7 +67,7 @@ Ensure you have the necessary tools installed:
 ```bash
 make cli
 ```
-Or install them individually: `make helm-cli`, `make kubectl-cli`, `make pack-cli`.
+Or install them individually: `make helm-cli`, `make kubectl-cli`, `make pack-cli`, `make kp-cli`.
 
 ### 2. Install the Stack
 

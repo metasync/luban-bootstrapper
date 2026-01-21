@@ -14,7 +14,7 @@ RESET := \033[0m
 .PHONY: help all \
 	cert-manager envoy-gateway gateway \
 	argo-workflows argo-cd argo-events kpack \
-	cli pack-cli helm-cli kubectl-cli \
+	cli pack-cli kp-cli helm-cli kubectl-cli \
 	uninstall \
 	uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway \
 	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack
@@ -30,9 +30,10 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-events" "Install Argo Events (Chart $(ARGO_EVENTS_CHART_VERSION)) into namespace $(ARGO_EVENTS_NAMESPACE)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kpack" "Install kpack ($(KPACK_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make pack-cli" "Install pack CLI (v$(PACK_CLI_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kp-cli" "Install kp CLI (v$(KP_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make helm-cli" "Install Helm CLI (v$(HELM_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubectl-cli" "Install Kubectl CLI (v$(KUBECTL_CLI_VERSION))"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, helm, kubectl)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, kp, helm, kubectl)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall" "Uninstall all components and infra"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
@@ -107,6 +108,10 @@ cli:
 pack-cli:
 	@echo "=== Installing pack CLI ==="
 	@$(MAKE) -C cli install-pack-cli
+
+kp-cli:
+	@echo "=== Installing kp CLI ==="
+	@$(MAKE) -C cli install-kp-cli
 
 helm-cli:
 	@echo "=== Installing Helm CLI ==="

@@ -6,13 +6,21 @@ include ../Makefile.env
 
 KPACK_RELEASE_URL ?= https://github.com/buildpacks-community/kpack/releases/download/v$(KPACK_VERSION)/release-$(KPACK_VERSION).yaml
 
+# If GHCR_MIRROR is set, replace ghcr.io with the mirror.
+# Otherwise, just pass the content through.
+ifneq ($(strip $(GHCR_MIRROR)),)
+	REPLACE_GHCR := sed 's|ghcr.io|$(GHCR_MIRROR)|g'
+else
+	REPLACE_GHCR := cat
+endif
+
 .PHONY: install uninstall
 
 install:
 	@echo "Installing kpack v$(KPACK_VERSION)..."
 	@retries=5; \
 	for i in $$(seq 1 $$retries); do \
-	  if curl -sL $(KPACK_RELEASE_URL) | sed 's|ghcr.io|$(GHCR_MIRROR)|g' | $(KUBECTL) apply -f - >/dev/null 2>&1; then \
+	  if curl -sL $(KPACK_RELEASE_URL) | $(REPLACE_GHCR) | $(KUBECTL) apply -f - >/dev/null 2>&1; then \
 	    break; \
 	  fi; \
 	  if [ $$i -eq $$retries ]; then \
@@ -27,6 +35,6 @@ install:
 
 uninstall:
 	@echo "Uninstalling kpack..."
-	@curl -sL $(KPACK_RELEASE_URL) | sed 's|ghcr.io|$(GHCR_MIRROR)|g' | $(KUBECTL) delete -f - || true
+	@curl -sL $(KPACK_RELEASE_URL) | $(REPLACE_GHCR) | $(KUBECTL) delete -f - || true
 	@echo "Deleting namespace $(KPACK_NAMESPACE)..."
 	@$(KUBECTL) delete namespace $(KPACK_NAMESPACE) --ignore-not-found=true || true

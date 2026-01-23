@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.2.0] - 2026-01-23
+
+This release switches Envoy Gateway to `GatewayNamespace` mode for better architectural alignment and includes fixes for Argo CD routing.
+
+### Infrastructure
+
+-   **Envoy Gateway**:
+    -   Switched deployment mode to `GatewayNamespace`. This ensures Envoy proxies are deployed in the same namespace as the `Gateway` resource (i.e., `gateway` namespace), simplifying traffic management and reducing cross-namespace permissions issues.
+-   **Argo CD**:
+    -   Verified/Fixed HTTPRoute to correctly reference the centralized `argo-gateway`.
+
+---
+
 ## [v0.1.0] - 2026-01-22
 
 This release introduces support for the kpack CLI (`kp`), improved kpack installation logic, and general documentation updates.

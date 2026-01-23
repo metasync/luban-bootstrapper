@@ -1,0 +1,6 @@
+config:
+  envoyGateway:
+    provider:
+      kubernetes:
+        deploy:
+          type: GatewayNamespace

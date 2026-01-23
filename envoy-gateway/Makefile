@@ -13,6 +13,7 @@ install:
 		--version v$(ENVOY_GATEWAY_CHART_VERSION) \
 		--namespace $(ENVOY_GATEWAY_NAMESPACE) \
 		--create-namespace \
+		--values values.yaml \
 		--wait
 
 uninstall:

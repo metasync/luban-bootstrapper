@@ -120,6 +120,10 @@ make -C argo-cd get-password
     kubectl get secret local-ca-root -n gateway -o jsonpath='{.data.ca\.crt}' | base64 -D > local-ca.crt
     ```
   - Import `local-ca.crt` into your Keychain / Browser trust store.
+  - Certificate rotation policy:
+    - Leaf certs (Argocd/Workflows): duration `2160h` (90d), renewBefore `360h` (15d)
+    - Local CA: duration `43800h` (5y), renewBefore `720h` (30d)
+    - Values use Go `time.Duration` format (h/m/s), not `d`.
 
 ## Verification
 

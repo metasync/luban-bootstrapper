@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.2.1] - 2026-01-23
+
+### Certificates
+-   Set explicit rotation policy for leaf certificates (Argo CD, Argo Workflows):
+    -   duration: 2160h (# 90d), renewBefore: 360h (# 15d)
+-   Extended local CA validity:
+    -   duration: 43800h (# 5y), renewBefore: 720h (# 30d)
+-   Added inline readability comments next to hour values.
+
+---
+
 ## [v0.2.0] - 2026-01-23
 
 This release switches Envoy Gateway to `GatewayNamespace` mode for better architectural alignment and includes fixes for Argo CD routing.

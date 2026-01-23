@@ -23,6 +23,8 @@ spec:
   isCA: true
   commonName: local-ca
   secretName: local-ca-root
+  duration: 43800h # 5y
+  renewBefore: 720h # 30d
   issuerRef:
     name: local-selfsigned
     kind: Issuer

@@ -15,7 +15,7 @@ install:
 uninstall:
 	@echo "Uninstalling gateway resources..."
 	-@$(KUBECTL) delete -f resources.yaml || true
-	-@$(KUBECTL) delete gateways.gateway.networking.k8s.io argo-gateway -n $(GATEWAY_NAMESPACE) || true
+	-@$(KUBECTL) delete gateways.gateway.networking.k8s.io luban-gateway -n $(GATEWAY_NAMESPACE) || true
 	-@$(KUBECTL) delete gatewayclasses.gateway.networking.k8s.io envoy || true
 	-@$(KUBECTL) delete issuers.cert-manager.io local-ca-issuer -n $(GATEWAY_NAMESPACE) || true
 	-@$(KUBECTL) delete certificates.cert-manager.io local-ca -n $(GATEWAY_NAMESPACE) || true

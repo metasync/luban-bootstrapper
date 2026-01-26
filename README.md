@@ -87,12 +87,14 @@ make argo-cd
 
 ## Accessing the UIs
 
-The stack uses Envoy Gateway to expose UIs via HTTPS.
+The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gateway`) supports wildcard subdomains on `*.luban.k8s.orb.local` as well as legacy `*.k8s.orb.local` domains.
 
 | Component | URL | Notes |
 |-----------|-----|-------|
 | **Argo Workflows** | `https://argo-workflows.k8s.orb.local` | Requires Token |
 | **Argo CD** | `https://argocd.k8s.orb.local` | User: `admin` |
+
+New services can be exposed by binding an `HTTPRoute` to the `luban-ci` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname.
 
 ### Authentication
 
@@ -155,4 +157,5 @@ This target ensures a clean slate by removing namespaces (`argo`, `argocd`, `env
 
 - **Namespace Stuck Terminating**: The uninstall targets attempt to force delete, but if a namespace is stuck, check for lingering finalizers on resources.
 - **Gateway Not Ready**: Ensure `cert-manager` is fully installed before installing `gateway`. The `make gateway` target includes a wait check for the cert-manager webhook.
+- **Port Conflicts**: Ensure no other gateways (e.g., from other namespaces) are claiming port 443 on the same node IP.
 - **Browser Warnings**: This is expected with a self-signed local CA. Follow the "TLS" section above to trust the CA.

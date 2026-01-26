@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.3.0] - 2026-01-26
+
+This release introduces a centralized Wildcard Gateway for scalable service exposure and renames the core gateway resource.
+
+### Gateway & Networking
+-   **Renamed Gateway**: `argo-gateway` is now `luban-gateway` to reflect its role as the central entry point for the platform.
+-   **Wildcard Support**:
+    -   Added a new `luban-ci` listener on `luban-gateway` that handles `*.luban.k8s.orb.local`.
+    -   Added a `luban-wildcard` Certificate to manage TLS for the wildcard domain automatically.
+-   **Legacy Support**:
+    -   Retained dedicated listeners for `argocd.k8s.orb.local` and `argo-workflows.k8s.orb.local` to ensure backward compatibility.
+    -   Updated Argo CD and Argo Workflows `HTTPRoute` resources to bind to the new `luban-gateway` while preserving their existing hostnames.
+
+---
+
 ## [v0.2.1] - 2026-01-23
 
 ### Certificates

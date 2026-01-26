@@ -25,7 +25,7 @@ spec:
   parentRefs:
   - group: gateway.networking.k8s.io
     kind: Gateway
-    name: argo-gateway
+    name: luban-gateway
     namespace: gateway
     sectionName: argocd
   hostnames:

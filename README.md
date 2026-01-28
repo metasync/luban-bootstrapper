@@ -7,6 +7,7 @@ The stack includes:
 - **Argo Workflows** (Workflow orchestration)
 - **Argo CD** (GitOps application delivery)
 - **Argo Events** (Event-driven dependency manager)
+- **Harbor** (Container Registry)
 - **kpack** (Cloud Native Buildpacks for Kubernetes)
 - **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
 - **cert-manager** (TLS certificate management with a local CA)
@@ -31,6 +32,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config.
 - **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
 - **[argo-events/](./argo-events/)**: Argo Events Helm install.
+- **[harbor/](./harbor/)**: Harbor Helm install & Gateway config.
 - **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
 - **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
 - **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
@@ -44,6 +46,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Argo Workflows (App v3.7.7)
   - Argo CD (App v3.2.5)
   - Argo Events (App v1.9.9)
+  - Harbor (App v2.14.0)
   - kpack (v0.17.1)
   - Envoy Gateway (v1.6.2)
   - cert-manager (v1.19.2)
@@ -57,6 +60,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - `K8S_DOMAIN` (default: `k8s.orb.local`)
   - `ARGO_WORKFLOWS_HOST` (`argo-workflows.k8s.orb.local`)
   - `ARGO_CD_HOST` (`argocd.k8s.orb.local`)
+  - `HARBOR_HOST` (`harbor.k8s.orb.local`)
 
 ## Installation
 
@@ -83,6 +87,7 @@ Or install components individually:
 make cert-manager envoy-gateway gateway
 make argo-workflows
 make argo-cd
+make harbor
 ```
 
 ## Accessing the UIs
@@ -93,6 +98,7 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 |-----------|-----|-------|
 | **Argo Workflows** | `https://argo-workflows.k8s.orb.local` | Requires Token |
 | **Argo CD** | `https://argocd.k8s.orb.local` | User: `admin` |
+| **Harbor** | `https://harbor.k8s.orb.local` | User: `admin` |
 
 New services can be exposed by binding an `HTTPRoute` to the `luban-ci` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname.
 
@@ -111,6 +117,13 @@ To retrieve the initial `admin` password:
 
 ```bash
 make -C argo-cd get-password
+```
+
+**Harbor:**
+To retrieve the initial `admin` password:
+
+```bash
+make -C harbor get-password
 ```
 
 ### DNS & TLS
@@ -142,6 +155,9 @@ kubectl -n argo get workflows
 
 **Argo CD:**
 Login to the UI and check that the status is "Healthy".
+
+**Harbor:**
+Login to the UI and create a new project.
 
 ## Uninstalling
 

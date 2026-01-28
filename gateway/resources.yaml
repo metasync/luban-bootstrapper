@@ -83,6 +83,18 @@ spec:
     allowedRoutes:
       namespaces:
         from: All
+  - name: harbor
+    protocol: HTTPS
+    port: 443
+    hostname: harbor.k8s.orb.local
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: harbor-tls
+    allowedRoutes:
+      namespaces:
+        from: All
   - name: argo-workflows
     protocol: HTTPS
     port: 443

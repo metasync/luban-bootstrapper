@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.4.0] - 2026-01-28
+
+### Features
+-   **Harbor Support**:
+    -   Added Harbor installation (App v2.14.0, Chart v1.18.0) via `make harbor`.
+    -   Exposed Harbor UI at `https://harbor.k8s.orb.local` using Envoy Gateway.
+    -   Configured a dedicated `HTTPRoute` with correct backend service routing (`harbor` service) for full API support.
+    -   Added `make -C harbor get-password` to easily retrieve the initial admin password.
+
+---
+
 ## [v0.3.0] - 2026-01-26
 
 This release introduces a centralized Wildcard Gateway for scalable service exposure and renames the core gateway resource.

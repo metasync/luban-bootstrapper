@@ -13,11 +13,11 @@ RESET := \033[0m
 
 .PHONY: help all \
 	cert-manager envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack \
+	argo-workflows argo-cd argo-events kpack harbor \
 	cli pack-cli kp-cli helm-cli kubectl-cli \
 	uninstall \
 	uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -29,6 +29,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-cd" "Install Argo CD (Chart $(ARGO_CD_CHART_VERSION)) into namespace $(ARGO_CD_NAMESPACE)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-events" "Install Argo Events (Chart $(ARGO_EVENTS_CHART_VERSION)) into namespace $(ARGO_EVENTS_NAMESPACE)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kpack" "Install kpack ($(KPACK_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make harbor" "Install Harbor (Chart $(HARBOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make pack-cli" "Install pack CLI (v$(PACK_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kp-cli" "Install kp CLI (v$(KP_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make helm-cli" "Install Helm CLI (v$(HELM_CLI_VERSION))"
@@ -42,6 +43,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-argo-cd" "Uninstall Argo CD"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-argo-events" "Uninstall Argo Events"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-kpack" "Uninstall kpack"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-harbor" "Uninstall Harbor"
 	@echo ""
 	@echo "$(BOLD)Environment variables (from Makefile.env):$(RESET)"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBECTL" "kubectl binary to use"
@@ -56,14 +58,17 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_NAMESPACE" "Namespace for Argo CD"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_NAMESPACE" "Namespace for Argo Events"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KPACK_NAMESPACE" "Namespace for kpack"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_NAMESPACE" "Namespace for Harbor"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_NAMESPACE" "Namespace for Envoy Gateway"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_NAMESPACE" "Namespace for cert-manager"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "GATEWAY_NAMESPACE" "Namespace for Gateway resources"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_CHART_VERSION" "Envoy Gateway chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_CHART_VERSION" "cert-manager chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_CHART_VERSION" "Harbor chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "K8S_DOMAIN" "Base domain for ingress hosts"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_HOST" "Hostname for Argo Workflows UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_HOST" "Hostname for Argo CD UI"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_HOST" "Hostname for Harbor UI"
 
 all: cert-manager \
 	envoy-gateway \
@@ -71,7 +76,8 @@ all: cert-manager \
 	argo-workflows \
 	argo-cd \
 	argo-events \
-	kpack
+	kpack \
+	harbor
 
 cert-manager:
 	@echo "=== Installing cert-manager ==="
@@ -101,6 +107,10 @@ kpack:
 	@echo "=== Installing kpack ==="
 	@$(MAKE) -C kpack install
 
+harbor:
+	@echo "=== Installing Harbor ==="
+	@$(MAKE) -C harbor install
+
 cli:
 	@echo "=== Installing all CLIs ==="
 	@$(MAKE) -C cli install-all-cli
@@ -125,9 +135,14 @@ uninstall: uninstall-argo-workflows \
 	uninstall-argo-cd \
 	uninstall-argo-events \
 	uninstall-kpack \
+	uninstall-harbor \
 	uninstall-gateway \
 	uninstall-envoy-gateway \
 	uninstall-cert-manager
+
+uninstall-harbor:
+	@echo "=== Uninstalling Harbor ==="
+	@$(MAKE) -C harbor uninstall
 
 uninstall-cert-manager:
 	@echo "=== Uninstalling cert-manager ==="

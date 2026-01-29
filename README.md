@@ -102,6 +102,8 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 
 New services can be exposed by binding an `HTTPRoute` to the `luban-ci` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname.
 
+Applications can be exposed using the `*.apps.k8s.orb.local` wildcard domain, which is handled by the `luban-apps` listener on the same gateway.
+
 ### Authentication
 
 **Argo Workflows:**

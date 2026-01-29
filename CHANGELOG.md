@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.0] - 2026-01-28
+
+### Features
+-   **Apps Wildcard Support**:
+    -   Added `luban-apps` listener on `luban-gateway` to handle `*.apps.k8s.orb.local`.
+    -   Added `apps-wildcard` Certificate to manage TLS for the apps wildcard domain automatically.
+    -   Updated documentation to mention the new wildcard domain for applications.
+
+---
+
 ## [v0.4.0] - 2026-01-28
 
 ### Features

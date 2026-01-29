@@ -54,6 +54,22 @@ spec:
   duration: 2160h # 90d
   renewBefore: 360h # 15d
 ---
+# Wildcard Certificate for *.apps.k8s.orb.local
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: apps-wildcard
+  namespace: gateway
+spec:
+  secretName: apps-wildcard-tls
+  dnsNames:
+  - "*.apps.k8s.orb.local"
+  issuerRef:
+    name: local-ca-issuer
+    kind: Issuer
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+---
 # Envoy GatewayClass and Gateway for HTTPS entrypoints
 # to Argo Workflows and Argo CD.
 apiVersion: gateway.networking.k8s.io/v1
@@ -80,6 +96,18 @@ spec:
       certificateRefs:
       - kind: Secret
         name: luban-wildcard-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: luban-apps
+    protocol: HTTPS
+    port: 443
+    hostname: "*.apps.k8s.orb.local"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: apps-wildcard-tls
     allowedRoutes:
       namespaces:
         from: All

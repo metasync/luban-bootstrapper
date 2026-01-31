@@ -1,0 +1,67 @@
+# Local Ingress Configuration
+# This file contains the local CA and wildcard certificates for the local development environment.
+# Domain: *.k8s.orb.local
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: local-selfsigned
+  namespace: gateway
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: local-ca
+  namespace: gateway
+spec:
+  isCA: true
+  commonName: local-ca
+  secretName: local-ca-root
+  duration: 43800h # 5y
+  renewBefore: 720h # 30d
+  issuerRef:
+    name: local-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: local-ca-issuer
+  namespace: gateway
+spec:
+  ca:
+    secretName: local-ca-root
+---
+# Wildcard Certificate for *.luban.k8s.orb.local
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: luban-local-wildcard
+  namespace: gateway
+spec:
+  secretName: luban-local-wildcard-tls
+  dnsNames:
+  - "*.luban.k8s.orb.local"
+  issuerRef:
+    name: local-ca-issuer
+    kind: Issuer
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+---
+# Wildcard Certificate for *.apps.k8s.orb.local
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: apps-local-wildcard
+  namespace: gateway
+spec:
+  secretName: apps-local-wildcard-tls
+  dnsNames:
+  - "*.apps.k8s.orb.local"
+  issuerRef:
+    name: local-ca-issuer
+    kind: Issuer
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d

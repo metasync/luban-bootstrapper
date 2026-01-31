@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.6.0] - 2026-02-01
+
+### Features
+-   **Public Domain Support (Split-Horizon DNS)**:
+    -   Implemented support for public access via `*.metasync.cc` domains using Cloudflare.
+    -   Integrated `cert-manager` with Let's Encrypt (Prod) and Cloudflare DNS-01 solver for automated public wildcard certificates.
+    -   Added `public-ingress.yaml` to manage `ClusterIssuer` and public `Certificate` resources.
+    -   Updated Gateway to support dual-stack listeners: `luban-local` (`*.luban.k8s.orb.local`) and `luban-public` (`*.luban.metasync.cc`).
+-   **Local Domain Restructuring**:
+    -   Renamed local domain structure to `*.luban.k8s.orb.local` for CI tools and `*.apps.k8s.orb.local` for applications.
+    -   Migrated all internal apps (Argo CD, Argo Workflows, Harbor) to use the shared wildcard certificate `luban-local-wildcard-tls`, removing the need for per-app certificates.
+-   **Infrastructure**:
+    -   Updated `cert-manager` installation to use Google DNS (`8.8.8.8`) for recursive lookups to resolve local `SERVFAIL` propagation issues.
+    -   Refactored `gateway/resources.yaml` into modular files: `gateway.yaml` (core), `local-ingress.yaml` (PKI), and `public-ingress.yaml` (Let's Encrypt).
+    -   Added `secrets/cloudflare.env` support for secure API token management.
+
+---
+
 ## [v0.5.0] - 2026-01-28
 
 ### Features

@@ -19,6 +19,7 @@ install:
 		--create-namespace \
 		--version v$(CERT_MANAGER_CHART_VERSION) \
 		--set installCRDs=true \
+		--set extraArgs="{--dns01-recursive-nameservers=8.8.8.8:53,--dns01-recursive-nameservers-only=true}" \
 		--wait
 
 uninstall:

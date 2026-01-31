@@ -1,0 +1,73 @@
+# Gateway Namespace and Gateway API Resources
+# This file contains the core infrastructure: Namespace, GatewayClass, and Gateway.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gateway
+---
+# Envoy GatewayClass and Gateway for HTTPS entrypoints
+# to Argo Workflows and Argo CD.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: luban-gateway
+  namespace: gateway
+spec:
+  gatewayClassName: envoy
+  listeners:
+  - name: luban-local
+    protocol: HTTPS
+    port: 443
+    hostname: "*.luban.k8s.orb.local"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: luban-local-wildcard-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: apps-local
+    protocol: HTTPS
+    port: 443
+    hostname: "*.apps.k8s.orb.local"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: apps-local-wildcard-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: luban-public
+    protocol: HTTPS
+    port: 443
+    hostname: "*.luban.metasync.cc"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: luban-public-wildcard-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: apps-public
+    protocol: HTTPS
+    port: 443
+    hostname: "*.apps.metasync.cc"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: apps-public-wildcard-tls
+    allowedRoutes:
+      namespaces:
+        from: All

@@ -57,10 +57,10 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - kp (v0.13.1)
 - **Namespaces**: Define where each component is installed.
 - **Domains**:
-  - `K8S_DOMAIN` (default: `k8s.orb.local`)
-  - `ARGO_WORKFLOWS_HOST` (`argo-workflows.k8s.orb.local`)
-  - `ARGO_CD_HOST` (`argocd.k8s.orb.local`)
-  - `HARBOR_HOST` (`harbor.k8s.orb.local`)
+  - `K8S_DOMAIN` (default: `luban.k8s.orb.local`)
+  - `ARGO_WORKFLOWS_HOST` (`argo-workflows.luban.k8s.orb.local`)
+  - `ARGO_CD_HOST` (`argocd.luban.k8s.orb.local`)
+  - `HARBOR_HOST` (`harbor.luban.k8s.orb.local`)
 
 ## Installation
 
@@ -92,17 +92,17 @@ make harbor
 
 ## Accessing the UIs
 
-The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gateway`) supports wildcard subdomains on `*.luban.k8s.orb.local` as well as legacy `*.k8s.orb.local` domains.
+The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gateway`) supports wildcard subdomains for both local development and public access.
 
-| Component | URL | Notes |
-|-----------|-----|-------|
-| **Argo Workflows** | `https://argo-workflows.k8s.orb.local` | Requires Token |
-| **Argo CD** | `https://argocd.k8s.orb.local` | User: `admin` |
-| **Harbor** | `https://harbor.k8s.orb.local` | User: `admin` |
+| Component | Local URL | Public URL | Notes |
+|-----------|-----------|------------|-------|
+| **Argo Workflows** | `https://argo-workflows.luban.k8s.orb.local` | `https://argo-workflows.luban.metasync.cc` | Requires Token |
+| **Argo CD** | `https://argocd.luban.k8s.orb.local` | `https://argocd.luban.metasync.cc` | User: `admin` |
+| **Harbor** | `https://harbor.luban.k8s.orb.local` | `https://harbor.luban.metasync.cc` | User: `admin` |
 
-New services can be exposed by binding an `HTTPRoute` to the `luban-ci` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname.
+New services can be exposed by binding an `HTTPRoute` to the `luban-local` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname (or `luban-public` for `*.luban.metasync.cc`).
 
-Applications can be exposed using the `*.apps.k8s.orb.local` wildcard domain, which is handled by the `luban-apps` listener on the same gateway.
+Applications can be exposed using the `*.apps.k8s.orb.local` (local) or `*.apps.metasync.cc` (public) wildcard domains.
 
 ### Authentication
 
@@ -130,13 +130,22 @@ make -C harbor get-password
 
 ### DNS & TLS
 
-- **DNS**: OrbStack automatically resolves `*.k8s.orb.local` to your cluster's LoadBalancer. If not using OrbStack, add entries to `/etc/hosts`.
-- **TLS**: A local CA is generated in the `gateway` namespace.
-  - To trust the CA, extract the certificate:
-    ```bash
-    kubectl get secret local-ca-root -n gateway -o jsonpath='{.data.ca\.crt}' | base64 -D > local-ca.crt
-    ```
-  - Import `local-ca.crt` into your Keychain / Browser trust store.
+- **DNS**:
+  - **Local**:
+    - **OrbStack**: Automatically resolves `*.k8s.orb.local` to your cluster.
+    - **Other**: Add entries to `/etc/hosts` pointing to your cluster IP:
+      ```
+      127.0.0.1 argo-workflows.luban.k8s.orb.local argocd.luban.k8s.orb.local harbor.luban.k8s.orb.local
+      ```
+  - **Public**: Cloudflare manages `*.metasync.cc`.
+- **TLS**:
+  - **Local**: A local CA is generated in the `gateway` namespace.
+    - To trust the CA, extract the certificate:
+      ```bash
+      kubectl get secret local-ca-root -n gateway -o jsonpath='{.data.ca\.crt}' | base64 -D > local-ca.crt
+      ```
+    - Import `local-ca.crt` into your Keychain / Browser trust store.
+  - **Public**: Let's Encrypt (Staging/Prod) via DNS-01 challenge (Cloudflare).
   - Certificate rotation policy:
     - Leaf certs (Argocd/Workflows): duration `2160h` (90d), renewBefore `360h` (15d)
     - Local CA: duration `43800h` (5y), renewBefore `720h` (30d)

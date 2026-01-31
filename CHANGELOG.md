@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.1] - 2026-02-01
+
+### Documentation
+-   **README Updates**:
+    -   Added explicit prerequisite section for Cloudflare API Token and domain ownership.
+    -   Clarified local vs public access URLs and DNS configuration.
+
+---
+
 ## [v0.6.0] - 2026-02-01
 
 ### Features

@@ -64,7 +64,20 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
 
 ## Installation
 
-### 1. Install CLIs
+### 1. Configure Secrets (Important)
+
+**Prerequisite:** You must own a public domain (e.g., `your-company.com`) managed by Cloudflare.
+
+To enable public access via Cloudflare, you must provide your Cloudflare API Token.
+
+1. Create a file `secrets/cloudflare.env` (this file is git-ignored).
+2. Add your token:
+   ```bash
+   CLOUDFLARE_API_TOKEN=your-token-here
+   ```
+   *Note: The token requires `Zone:DNS:Edit` permissions for your domain.*
+
+### 2. Install CLIs
 
 Ensure you have the necessary tools installed:
 

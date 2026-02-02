@@ -14,7 +14,7 @@ RESET := \033[0m
 .PHONY: help all \
 	cert-manager envoy-gateway gateway \
 	argo-workflows argo-cd argo-events kpack harbor \
-	cli pack-cli kp-cli helm-cli kubectl-cli \
+	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall \
 	uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway \
 	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor
@@ -34,7 +34,8 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kp-cli" "Install kp CLI (v$(KP_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make helm-cli" "Install Helm CLI (v$(HELM_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubectl-cli" "Install Kubectl CLI (v$(KUBECTL_CLI_VERSION))"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, kp, helm, kubectl)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-cli" "Install Argo CLI (v$(ARGO_CLI_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, kp, helm, kubectl, argo)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall" "Uninstall all components and infra"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
@@ -54,6 +55,7 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "PACK_CLI_VERSION" "pack CLI version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HELM_CLI_VERSION" "Helm CLI version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBECTL_CLI_VERSION" "Kubectl CLI version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CLI_VERSION" "Argo CLI version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_NAMESPACE" "Namespace for Argo Workflows"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_NAMESPACE" "Namespace for Argo CD"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_NAMESPACE" "Namespace for Argo Events"
@@ -130,6 +132,10 @@ helm-cli:
 kubectl-cli:
 	@echo "=== Installing Kubectl CLI ==="
 	@$(MAKE) -C cli install-kubectl-cli
+
+argo-cli:
+	@echo "=== Installing Argo CLI ==="
+	@$(MAKE) -C cli install-argo-cli
 
 uninstall: uninstall-argo-workflows \
 	uninstall-argo-cd \

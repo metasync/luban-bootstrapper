@@ -23,6 +23,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - `helm`
 - `pack`
 - `kp`
+- `argo`
 
 ## Layout
 

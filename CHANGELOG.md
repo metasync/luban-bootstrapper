@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.2] - 2026-02-01
+
+### Features
+-   **CLI Support**:
+    -   Added `make argo-cli` to install the Argo Workflows CLI (`argo`).
+    -   Included `argo` in the `make cli` bundle.
+    -   Added version variable `ARGO_CLI_VERSION` to `Makefile.env`.
+
+---
+
 ## [v0.6.1] - 2026-02-01
 
 ### Documentation

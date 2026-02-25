@@ -1,0 +1,24 @@
+# ### Diagnosis
+# The "Connection closed" error in the Argo UI is caused by 
+# a timeout on the long-lived SSE (Server-Sent Events) connection
+# used for live updates. This is happening because the Envoy Gateway 
+# (managing the argo-workflows-ui route) has a default request timeout 
+# (likely 60s), which kills the connection.
+#
+# ### Solution
+# Create a BackendTrafficPolicy in the argo namespace to 
+# increase the request timeout for the Argo UI.
+#
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: argo-workflows-ui-timeout
+  namespace: argo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: argo-workflows-ui
+  timeout:
+    http:
+      requestTimeout: 0s  # 0s means infinite/disabled timeout

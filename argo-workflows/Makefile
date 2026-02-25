@@ -27,6 +27,8 @@ install:
 	@$(KUBECTL) apply -n $(ARGO_WORKFLOWS_NAMESPACE) -f workflow-rbac.yaml
 	@echo "Applying Gateway configuration..."
 	@$(KUBECTL) apply -f gateway.yaml
+	@echo "Applying Gateway timeout policy..."
+	@$(KUBECTL) apply -f argo-timeout.yaml
 	@POD=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get pod -l app.kubernetes.io/name=argo-workflows-server --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}'); \
 	echo "Creating/updating argo-workflows-token secret in namespace $(ARGO_WORKFLOWS_NAMESPACE)"; \
 	TOKEN=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) exec $$POD -c argo-server -- argo auth token); \

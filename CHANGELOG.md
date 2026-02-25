@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.3] - 2026-02-25
+
+### Bug Fixes
+-   **Argo Workflows**:
+    -   Added `BackendTrafficPolicy` to disable request timeouts for the Argo Workflows UI.
+    -   Fixed "Connection closed" errors affecting long-lived SSE connections in the UI.
+
+---
+
 ## [v0.6.2] - 2026-02-01
 
 ### Features

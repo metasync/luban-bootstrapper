@@ -21,6 +21,8 @@ install:
 		--version $(ARGO_WORKFLOWS_CHART_VERSION) \
 		--set server.secure=false \
 		--set server.extraArgs={--secure=false} \
+		--set server.extraEnv[0].name=SSO_DELEGATE_RBAC_TO_NAMESPACE \
+		--set-string server.extraEnv[0].value="true" \
 		--set controller.workflowDefaults.spec.serviceAccountName=workflow-runner \
 		--wait
 	@echo "Applying workflow RBAC (ServiceAccount and RoleBinding)..."

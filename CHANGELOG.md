@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.4] - 2026-03-04
+
+### Features
+-   **Argo Workflows**:
+    -   Enabled `SSO_DELEGATE_RBAC_TO_NAMESPACE` to allow namespace-level RBAC delegation when using SSO.
+
+---
+
 ## [v0.6.3] - 2026-02-25
 
 ### Bug Fixes

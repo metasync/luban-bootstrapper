@@ -1,0 +1,44 @@
+# Custom configuration for JupyterHub
+hub:
+  extraConfig:
+    dagsterEnv: |
+      def dagster_prefix(spawner):
+          return f"/user/{spawner.user.name}/dagster"
+      
+      c.KubeSpawner.environment.update({
+          "DAGSTER_WEBSERVER_PATH_PREFIX": dagster_prefix
+      })
+
+singleuser:
+  image:
+    name: quay.io/metasync/data-engineering-notebook
+    tag: "2026-03-02"
+    pullPolicy: Always
+  cmd: null
+  extraEnv:
+    # Ensures the container runs the modern Jupyter Server to respect our config
+    JUPYTERHUB_SINGLEUSER_APP: "jupyter_server.serverapp.ServerApp"
+  memory:
+    limit: 4G
+    guarantee: 2G
+  cpu:
+    limit: 2
+    guarantee: 0.5
+  extraFiles:
+    jupyter_server_config:
+      mountPath: /etc/jupyter/jupyter_server_config.py
+      stringData: |
+        c.ContentsManager.allow_hidden = True
+
+        # Jupyter Server Proxy Configuration
+        c.ServerProxy.servers = {
+          "dagster": {
+            "port": 3000,
+            "absolute_url": True,
+            "launcher_entry": {
+              "enabled": True,
+              "title": "Dagster",
+              "icon_path": ""
+            }
+          }
+        }

@@ -13,11 +13,11 @@ RESET := \033[0m
 
 .PHONY: help all \
 	cert-manager envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack harbor \
+	argo-workflows argo-cd argo-events kpack harbor jupyterhub \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall \
 	uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -30,6 +30,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-events" "Install Argo Events (Chart $(ARGO_EVENTS_CHART_VERSION)) into namespace $(ARGO_EVENTS_NAMESPACE)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kpack" "Install kpack ($(KPACK_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make harbor" "Install Harbor (Chart $(HARBOR_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make jupyterhub" "Install JupyterHub (Chart $(JUPYTERHUB_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make pack-cli" "Install pack CLI (v$(PACK_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kp-cli" "Install kp CLI (v$(KP_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make helm-cli" "Install Helm CLI (v$(HELM_CLI_VERSION))"
@@ -45,6 +46,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-argo-events" "Uninstall Argo Events"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-kpack" "Uninstall kpack"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-harbor" "Uninstall Harbor"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-jupyterhub" "Uninstall JupyterHub"
 	@echo ""
 	@echo "$(BOLD)Environment variables (from Makefile.env):$(RESET)"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBECTL" "kubectl binary to use"
@@ -71,6 +73,7 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_HOST" "Hostname for Argo Workflows UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_HOST" "Hostname for Argo CD UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_HOST" "Hostname for Harbor UI"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_HOST" "Hostname for JupyterHub UI"
 
 all: cert-manager \
 	envoy-gateway \
@@ -113,6 +116,10 @@ harbor:
 	@echo "=== Installing Harbor ==="
 	@$(MAKE) -C harbor install
 
+jupyterhub:
+	@echo "=== Installing JupyterHub ==="
+	@$(MAKE) -C jupyterhub install
+
 cli:
 	@echo "=== Installing all CLIs ==="
 	@$(MAKE) -C cli install-all-cli
@@ -142,6 +149,7 @@ uninstall: uninstall-argo-workflows \
 	uninstall-argo-events \
 	uninstall-kpack \
 	uninstall-harbor \
+	uninstall-jupyterhub \
 	uninstall-gateway \
 	uninstall-envoy-gateway \
 	uninstall-cert-manager
@@ -149,6 +157,10 @@ uninstall: uninstall-argo-workflows \
 uninstall-harbor:
 	@echo "=== Uninstalling Harbor ==="
 	@$(MAKE) -C harbor uninstall
+
+uninstall-jupyterhub:
+	@echo "=== Uninstalling JupyterHub ==="
+	@$(MAKE) -C jupyterhub uninstall
 
 uninstall-cert-manager:
 	@echo "=== Uninstalling cert-manager ==="

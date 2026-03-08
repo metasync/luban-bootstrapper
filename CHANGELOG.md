@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.6.5] - 2026-03-08
+
+### Added
+
+- **JupyterHub:**
+    - Introduced a custom single-user image (`data-engineering-notebook`) based on `jupyter/datascience-notebook`.
+    - Integrated `zsh` with **Oh My Zsh** and `make` autocompletion as the default shell.
+    - Pre-installed `uv` (0.10.8) for fast Python package management.
+    - Added `jupyter-server-proxy` configuration to support Dagster development (port 3000).
+    - Configured dynamic environment variables (`DAGSTER_WEBSERVER_PATH_PREFIX`) for per-user Dagster instances.
+    - Enabled access to hidden files (dotfiles) in Jupyter Server.
+    - Added comprehensive documentation in `jupyterhub/README.md`.
+
+### Changed
+
+- **JupyterHub:**
+    - Updated resource limits to use Burstable QoS (2G Guarantee / 4G Limit) for better memory utilization.
+    - Refactored image configuration from `Makefile` to `values.yaml`.
+    - Set `imagePullPolicy` to `Always` to ensure the latest image is used on restart.
+
 ## [v0.6.4] - 2026-03-04
 
 ### Features

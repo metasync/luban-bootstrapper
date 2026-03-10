@@ -8,7 +8,9 @@ The stack includes:
 - **Argo CD** (GitOps application delivery)
 - **Argo Events** (Event-driven dependency manager)
 - **Harbor** (Container Registry)
+- **JupyterHub** (Multi-user Notebook Platform)
 - **kpack** (Cloud Native Buildpacks for Kubernetes)
+- **Reflector** (Secret/ConfigMap replication)
 - **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
 - **cert-manager** (TLS certificate management with a local CA)
 
@@ -34,7 +36,9 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
 - **[argo-events/](./argo-events/)**: Argo Events Helm install.
 - **[harbor/](./harbor/)**: Harbor Helm install & Gateway config.
+- **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config.
 - **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
+- **[reflector/](./reflector/)**: Reflector Helm install.
 - **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
 - **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
 - **[kpack/](./kpack/)**: kpack raw manifest install.
@@ -48,7 +52,9 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Argo CD (App v3.2.5)
   - Argo Events (App v1.9.9)
   - Harbor (App v2.14.0)
+  - JupyterHub (App v5.4.3)
   - kpack (v0.17.1)
+  - Reflector (v10.0.16)
   - Envoy Gateway (v1.6.2)
   - cert-manager (v1.19.2)
 - **CLI Versions**:
@@ -102,6 +108,7 @@ make cert-manager envoy-gateway gateway
 make argo-workflows
 make argo-cd
 make harbor
+make jupyterhub
 ```
 
 ## Accessing the UIs
@@ -113,6 +120,7 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 | **Argo Workflows** | `https://argo-workflows.luban.k8s.orb.local` | `https://argo-workflows.luban.metasync.cc` | Requires Token |
 | **Argo CD** | `https://argocd.luban.k8s.orb.local` | `https://argocd.luban.metasync.cc` | User: `admin` |
 | **Harbor** | `https://harbor.luban.k8s.orb.local` | `https://harbor.luban.metasync.cc` | User: `admin` |
+| **JupyterHub** | `https://jupyterhub.luban.k8s.orb.local` | `https://jupyterhub.luban.metasync.cc` | Any User |
 
 New services can be exposed by binding an `HTTPRoute` to the `luban-local` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname (or `luban-public` for `*.luban.metasync.cc`).
 
@@ -149,7 +157,7 @@ make -C harbor get-password
     - **OrbStack**: Automatically resolves `*.k8s.orb.local` to your cluster.
     - **Other**: Add entries to `/etc/hosts` pointing to your cluster IP:
       ```
-      127.0.0.1 argo-workflows.luban.k8s.orb.local argocd.luban.k8s.orb.local harbor.luban.k8s.orb.local
+      127.0.0.1 argo-workflows.luban.k8s.orb.local argocd.luban.k8s.orb.local harbor.luban.k8s.orb.local jupyterhub.luban.k8s.orb.local
       ```
   - **Public**: Cloudflare manages `*.metasync.cc`.
 - **TLS**:
@@ -183,6 +191,9 @@ Login to the UI and check that the status is "Healthy".
 
 **Harbor:**
 Login to the UI and create a new project.
+
+**JupyterHub:**
+Login with any username/password (dummy auth).
 
 ## Uninstalling
 

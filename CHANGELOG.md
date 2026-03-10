@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.6] - 2026-03-10
+
+### Added
+
+- **Reflector:**
+    - Added Reflector installation (Chart v10.0.16) via `make reflector`.
+    - Included `reflector` in the `make all` target.
+    - Added `uninstall-reflector` target.
+
 ## [v0.6.5] - 2026-03-08
 
 ### Added

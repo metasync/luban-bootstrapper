@@ -12,17 +12,18 @@ RESET := \033[0m
 # Also provides targets to install necessary CLIs (pack, helm, kubectl).
 
 .PHONY: help all \
-	cert-manager envoy-gateway gateway \
+	cert-manager reflector envoy-gateway gateway \
 	argo-workflows argo-cd argo-events kpack harbor jupyterhub \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall \
-	uninstall-cert-manager uninstall-envoy-gateway uninstall-gateway \
+	uninstall-cert-manager uninstall-reflector uninstall-envoy-gateway uninstall-gateway \
 	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make all" "Install infra and all components"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cert-manager" "Install cert-manager (Chart $(CERT_MANAGER_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make reflector" "Install Reflector (Chart $(REFLECTOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make envoy-gateway" "Install Envoy Gateway (Chart $(ENVOY_GATEWAY_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make gateway" "Install Gateway API config and local CA issuer"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-workflows" "Install Argo Workflows (Chart $(ARGO_WORKFLOWS_CHART_VERSION)) into namespace $(ARGO_WORKFLOWS_NAMESPACE)"
@@ -39,6 +40,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, kp, helm, kubectl, argo)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall" "Uninstall all components and infra"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-reflector" "Uninstall Reflector"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-gateway" "Uninstall Gateway API config and local CA issuer"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-argo-workflows" "Uninstall Argo Workflows"
@@ -65,9 +67,11 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_NAMESPACE" "Namespace for Harbor"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_NAMESPACE" "Namespace for Envoy Gateway"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_NAMESPACE" "Namespace for cert-manager"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "REFLECTOR_NAMESPACE" "Namespace for Reflector"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "GATEWAY_NAMESPACE" "Namespace for Gateway resources"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_CHART_VERSION" "Envoy Gateway chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_CHART_VERSION" "cert-manager chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "REFLECTOR_CHART_VERSION" "Reflector chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_CHART_VERSION" "Harbor chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "K8S_DOMAIN" "Base domain for ingress hosts"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_HOST" "Hostname for Argo Workflows UI"
@@ -76,6 +80,7 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_HOST" "Hostname for JupyterHub UI"
 
 all: cert-manager \
+	reflector \
 	envoy-gateway \
 	gateway \
 	argo-workflows \
@@ -87,6 +92,10 @@ all: cert-manager \
 cert-manager:
 	@echo "=== Installing cert-manager ==="
 	@$(MAKE) -C cert-manager install
+
+reflector:
+	@echo "=== Installing Reflector ==="
+	@$(MAKE) -C reflector install
 
 envoy-gateway:
 	@echo "=== Installing Envoy Gateway ==="
@@ -152,6 +161,7 @@ uninstall: uninstall-argo-workflows \
 	uninstall-jupyterhub \
 	uninstall-gateway \
 	uninstall-envoy-gateway \
+	uninstall-reflector \
 	uninstall-cert-manager
 
 uninstall-harbor:
@@ -165,6 +175,10 @@ uninstall-jupyterhub:
 uninstall-cert-manager:
 	@echo "=== Uninstalling cert-manager ==="
 	@$(MAKE) -C cert-manager uninstall
+
+uninstall-reflector:
+	@echo "=== Uninstalling Reflector ==="
+	@$(MAKE) -C reflector uninstall
 
 uninstall-envoy-gateway:
 	@echo "=== Uninstalling Envoy Gateway ==="

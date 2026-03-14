@@ -26,10 +26,30 @@ install:
 	@echo "Applying Gateway configuration..."
 	@$(KUBECTL) apply -f gateway.yaml
 
-get-password:
+get-init-secret:
 	@echo "Retrieving initial admin password from secret argocd-initial-admin-secret..."
 	@$(KUBECTL) -n $(ARGO_CD_NAMESPACE) get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -D
 	@echo ""
+
+change-password:
+	@echo "Changing Argo CD admin password..."
+	@printf "Enter new admin password: "; \
+	read -s PASSWORD; \
+	echo ""; \
+	printf "Confirm new admin password: "; \
+	read -s PASSWORD_CONFIRM; \
+	echo ""; \
+	if [ "$$PASSWORD" != "$$PASSWORD_CONFIRM" ]; then \
+		echo "Passwords do not match."; \
+		exit 1; \
+	fi; \
+	HASH=$$(htpasswd -B -b -n -C 10 admin "$$PASSWORD" | cut -d ":" -f 2 | tr -d '\n'); \
+	TIME=$$(date -u +%FT%T%Z | tr -d '\n'); \
+	$(KUBECTL) -n $(ARGO_CD_NAMESPACE) patch secret argocd-secret \
+		-p "{\"data\": {\"admin.password\": \"$$(printf "%s" "$$HASH" | base64 | tr -d '\n')\", \"admin.passwordMtime\": \"$$(printf "%s" "$$TIME" | base64 | tr -d '\n')\"}}"; \
+	echo "Restarting Argo CD server to apply changes..."; \
+	$(KUBECTL) -n $(ARGO_CD_NAMESPACE) rollout restart deployment argo-cd-argocd-server; \
+	echo "Admin password updated successfully. Please wait for the server to restart."
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."

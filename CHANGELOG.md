@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.6.7] - 2026-03-11
+
+### Added
+- **Kubernetes Replicator:**
+    - Added Kubernetes Replicator installation (Chart v2.12.3) via `make kubernetes-replicator`.
+    - Replaced `reflector` with `kubernetes-replicator` in the `make all` target.
+    - Added `uninstall-kubernetes-replicator` target.
+- **Argo CD:**
+    - Added `make change-password` target to interactively update the admin password.
+    - Updated `change-password` to automatically restart the Argo CD server to apply changes immediately.
+    - Renamed `get-password` to `get-init-secret` to better reflect its purpose (retrieving the initial Helm-generated secret).
+    - Removed `get-password` target entirely as user-set passwords cannot be retrieved (hashing).
+
+### Changed
+- **Argo Workflows:**
+    - Removed the `SSO_DELEGATE_RBAC_TO_NAMESPACE` environment variable from the server installation configuration, as it is no longer required.
+- **Argo CD:**
+    - Reverted automatic password patching. The initial admin password is now preserved.
+
+### Removed
+- **Reflector:**
+    - Completely removed `reflector` from the project in favor of `kubernetes-replicator`.
+
 ## [v0.6.6] - 2026-03-10
 
 ### Added

@@ -10,7 +10,7 @@ The stack includes:
 - **Harbor** (Container Registry)
 - **JupyterHub** (Multi-user Notebook Platform)
 - **kpack** (Cloud Native Buildpacks for Kubernetes)
-- **Reflector** (Secret/ConfigMap replication)
+- **Kubernetes Replicator** (Secret/ConfigMap replication)
 - **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
 - **cert-manager** (TLS certificate management with a local CA)
 
@@ -38,7 +38,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[harbor/](./harbor/)**: Harbor Helm install & Gateway config.
 - **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config.
 - **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
-- **[reflector/](./reflector/)**: Reflector Helm install.
+- **[kubernetes-replicator/](./kubernetes-replicator/)**: Kubernetes Replicator Helm install.
 - **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
 - **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
 - **[kpack/](./kpack/)**: kpack raw manifest install.
@@ -54,7 +54,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Harbor (App v2.14.0)
   - JupyterHub (App v5.4.3)
   - kpack (v0.17.1)
-  - Reflector (v10.0.16)
+  - Kubernetes Replicator (v2.12.3)
   - Envoy Gateway (v1.6.2)
   - cert-manager (v1.19.2)
 - **CLI Versions**:
@@ -140,7 +140,13 @@ Copy the output and paste it into the UI login prompt.
 To retrieve the initial `admin` password:
 
 ```bash
-make -C argo-cd get-password
+make -C argo-cd get-init-secret
+```
+
+To change the `admin` password (interactive):
+
+```bash
+make -C argo-cd change-password
 ```
 
 **Harbor:**

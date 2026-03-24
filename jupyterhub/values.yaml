@@ -30,6 +30,14 @@ singleuser:
       stringData: |
         c.ContentsManager.allow_hidden = True
 
+        # Jupyter Scheduler Configuration
+        # Store the SQLite database in the user's persistent home directory
+        # so that schedules and job history survive pod restarts.
+        import os
+        home_dir = os.environ.get('HOME', '/home/jovyan')
+        db_path = os.path.join(home_dir, '.jupyter_scheduler.sqlite')
+        c.SchedulerApp.db_url = f"sqlite:///{db_path}"
+
         # Jupyter Server Proxy Configuration
         c.ServerProxy.servers = {
           "dagster": {

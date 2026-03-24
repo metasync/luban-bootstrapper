@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **JupyterHub:**
+    - Added `jupyter_scheduler` to the custom `data-engineering-notebook` image.
+    - Configured persistent SQLite database storage (`~/.jupyter_scheduler.sqlite`) to ensure schedules and job histories survive pod restarts.
+
 ## [v0.6.7] - 2026-03-11
 
 ### Added

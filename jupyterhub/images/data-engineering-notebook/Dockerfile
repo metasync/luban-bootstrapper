@@ -43,6 +43,6 @@ RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
 # Switch back to jovyan user for user-level configurations
 USER ${NB_UID}
 
-# Install jupyter-server-proxy
+# Install Python packages (jupyter-server-proxy, jupyter-scheduler)
 ARG JUPYTER_SERVER_PROXY_VERSION
-RUN pip install --no-cache-dir jupyter-server-proxy==${JUPYTER_SERVER_PROXY_VERSION}
+RUN pip install --no-cache-dir jupyter-server-proxy==${JUPYTER_SERVER_PROXY_VERSION} jupyter_scheduler

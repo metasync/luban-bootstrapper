@@ -24,7 +24,11 @@ install:
 		--set server.livenessProbe.httpGet.scheme=HTTP \
 		--wait
 	@echo "Applying Gateway configuration..."
-	@$(KUBECTL) apply -f gateway.yaml
+	@export ARGO_CD_NAMESPACE=$(ARGO_CD_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		ARGO_CD_HOST=$(ARGO_CD_HOST) \
+		ARGO_CD_PUBLIC_HOST=$(ARGO_CD_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) apply -f -
 
 get-init-secret:
 	@echo "Retrieving initial admin password from secret argocd-initial-admin-secret..."
@@ -53,7 +57,11 @@ change-password:
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."
-	@$(KUBECTL) delete -f gateway.yaml --ignore-not-found=true || true
+	@export ARGO_CD_NAMESPACE=$(ARGO_CD_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		ARGO_CD_HOST=$(ARGO_CD_HOST) \
+		ARGO_CD_PUBLIC_HOST=$(ARGO_CD_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Uninstalling Argo CD..."
 	@helm uninstall argo-cd -n $(ARGO_CD_NAMESPACE) || true
 	@echo "Deleting namespace $(ARGO_CD_NAMESPACE)..."

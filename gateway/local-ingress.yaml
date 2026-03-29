@@ -6,7 +6,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: local-selfsigned
-  namespace: gateway
+  namespace: ${GATEWAY_NAMESPACE}
 spec:
   selfSigned: {}
 ---
@@ -14,7 +14,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: local-ca
-  namespace: gateway
+  namespace: ${GATEWAY_NAMESPACE}
 spec:
   isCA: true
   commonName: local-ca
@@ -29,7 +29,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: local-ca-issuer
-  namespace: gateway
+  namespace: ${GATEWAY_NAMESPACE}
 spec:
   ca:
     secretName: local-ca-root
@@ -39,11 +39,11 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: luban-local-wildcard
-  namespace: gateway
+  namespace: ${GATEWAY_NAMESPACE}
 spec:
   secretName: luban-local-wildcard-tls
   dnsNames:
-  - "*.luban.k8s.orb.local"
+  - "*.${K8S_DOMAIN}"
   issuerRef:
     name: local-ca-issuer
     kind: Issuer
@@ -55,11 +55,11 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: apps-local-wildcard
-  namespace: gateway
+  namespace: ${GATEWAY_NAMESPACE}
 spec:
   secretName: apps-local-wildcard-tls
   dnsNames:
-  - "*.apps.k8s.orb.local"
+  - "*.${APPS_DOMAIN}"
   issuerRef:
     name: local-ca-issuer
     kind: Issuer

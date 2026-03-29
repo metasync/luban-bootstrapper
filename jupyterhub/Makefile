@@ -23,11 +23,19 @@ install:
 		--set ingress.enabled=false \
 		--wait
 	@echo "Applying Gateway configuration..."
-	@$(KUBECTL) apply -f gateway.yaml
+	@export JUPYTERHUB_NAMESPACE=$(JUPYTERHUB_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		JUPYTERHUB_HOST=$(JUPYTERHUB_HOST) \
+		JUPYTERHUB_PUBLIC_HOST=$(JUPYTERHUB_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) apply -f -
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."
-	@$(KUBECTL) delete -f gateway.yaml --ignore-not-found=true || true
+	@export JUPYTERHUB_NAMESPACE=$(JUPYTERHUB_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		JUPYTERHUB_HOST=$(JUPYTERHUB_HOST) \
+		JUPYTERHUB_PUBLIC_HOST=$(JUPYTERHUB_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Uninstalling JupyterHub..."
 	@helm uninstall jupyterhub -n $(JUPYTERHUB_NAMESPACE) || true
 	@echo "Deleting namespace $(JUPYTERHUB_NAMESPACE)..."

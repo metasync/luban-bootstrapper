@@ -1,0 +1,23 @@
+mode: standalone
+replicas: 1
+drivesPerNode: 1
+pools: 1
+
+existingSecret: "minio-auth"
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+buckets:
+  - name: starrocks
+    policy: none
+    purge: false

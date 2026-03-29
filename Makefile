@@ -13,11 +13,11 @@ RESET := \033[0m
 
 .PHONY: help all \
 	cert-manager kubernetes-replicator envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack harbor jupyterhub \
+	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall \
 	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -32,6 +32,8 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kpack" "Install kpack ($(KPACK_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make harbor" "Install Harbor (Chart $(HARBOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make jupyterhub" "Install JupyterHub (Chart $(JUPYTERHUB_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make minio" "Install MinIO (Chart $(MINIO_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make starrocks" "Install StarRocks Operator (Chart $(STARROCKS_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make pack-cli" "Install pack CLI (v$(PACK_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kp-cli" "Install kp CLI (v$(KP_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make helm-cli" "Install Helm CLI (v$(HELM_CLI_VERSION))"
@@ -48,13 +50,18 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-kpack" "Uninstall kpack"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-harbor" "Uninstall Harbor"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-jupyterhub" "Uninstall JupyterHub"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-minio" "Uninstall MinIO"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-starrocks" "Uninstall StarRocks Operator"
 	@echo ""
-	@echo "$(BOLD)Environment variables (from Makefile.env):$(RESET)"
+	@echo "$(BOLD)Configuration (from Makefile.env):$(RESET)"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBECTL" "kubectl binary to use"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_CHART_VERSION" "Argo Workflows chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_CHART_VERSION" "Argo CD chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_CHART_VERSION" "Argo Events chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KPACK_VERSION" "kpack version tag"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_CHART_VERSION" "JupyterHub chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "MINIO_CHART_VERSION" "MinIO chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_CHART_VERSION" "StarRocks chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "PACK_CLI_VERSION" "pack CLI version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HELM_CLI_VERSION" "Helm CLI version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBECTL_CLI_VERSION" "Kubectl CLI version"
@@ -63,7 +70,8 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_NAMESPACE" "Namespace for Argo CD"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_NAMESPACE" "Namespace for Argo Events"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KPACK_NAMESPACE" "Namespace for kpack"
-	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_NAMESPACE" "Namespace for Harbor"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_NAMESPACE" "Namespace for JupyterHub"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_NAMESPACE" "Namespace for StarRocks"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_NAMESPACE" "Namespace for Envoy Gateway"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_NAMESPACE" "Namespace for cert-manager"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBERNETES_REPLICATOR_NAMESPACE" "Namespace for Kubernetes Replicator"
@@ -77,6 +85,8 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_HOST" "Hostname for Argo CD UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_HOST" "Hostname for Harbor UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_HOST" "Hostname for JupyterHub UI"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "MINIO_HOST" "Hostname for MinIO Console"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_HOST" "Hostname for StarRocks"
 
 all: cert-manager \
 	kubernetes-replicator \
@@ -132,6 +142,14 @@ jupyterhub:
 	@echo "=== Installing JupyterHub ==="
 	@$(MAKE) -C jupyterhub install
 
+minio:
+	@echo "=== Installing MinIO ==="
+	@$(MAKE) -C minio install
+
+starrocks:
+	@echo "=== Installing StarRocks Operator ==="
+	@$(MAKE) -C starrocks install
+
 cli:
 	@echo "=== Installing all CLIs ==="
 	@$(MAKE) -C cli install-all-cli
@@ -162,6 +180,8 @@ uninstall: uninstall-argo-workflows \
 	uninstall-kpack \
 	uninstall-harbor \
 	uninstall-jupyterhub \
+	uninstall-starrocks \
+	uninstall-minio \
 	uninstall-gateway \
 	uninstall-envoy-gateway \
 	uninstall-kubernetes-replicator \
@@ -174,6 +194,14 @@ uninstall-harbor:
 uninstall-jupyterhub:
 	@echo "=== Uninstalling JupyterHub ==="
 	@$(MAKE) -C jupyterhub uninstall
+
+uninstall-minio:
+	@echo "=== Uninstalling MinIO ==="
+	@$(MAKE) -C minio uninstall
+
+uninstall-starrocks:
+	@echo "=== Uninstalling StarRocks Operator ==="
+	@$(MAKE) -C starrocks uninstall
 
 uninstall-cert-manager:
 	@echo "=== Uninstalling cert-manager ==="

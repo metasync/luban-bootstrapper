@@ -2,10 +2,35 @@
 
 ## [Unreleased]
 
+
+## [v0.6.8] - 2026-03-29
+
 ### Added
+- **MinIO:**
+    - Added MinIO installation using the official `minio/minio` Helm chart.
+    - Added Gateway HTTPRoute exposing the MinIO Console on both local and public hostnames.
+- **StarRocks (shared-data):**
+    - Added StarRocks installation (FE + CN) configured for shared-data mode backed by MinIO.
+    - Added Gateway HTTPRoute exposing StarRocks FE HTTP endpoint on both local and public hostnames.
+- **Gateway / Routing:**
+    - Added consistent `*_PUBLIC_HOST` variables for UI components, derived from `LUBAN_PUBLIC_DOMAIN`.
+    - Added `APPS_DOMAIN` / `APPS_PUBLIC_DOMAIN` and `LETSENCRYPT_EMAIL` to centralize domain/email configuration.
 - **JupyterHub:**
     - Added `jupyter_scheduler` to the custom `data-engineering-notebook` image.
     - Configured persistent SQLite database storage (`~/.jupyter_scheduler.sqlite`) to ensure schedules and job histories survive pod restarts.
+
+### Changed
+- **Gateway / TLS:**
+    - Templated Gateway and certificate manifests so listener hostnames and wildcard cert DNS names are derived from `Makefile.env`.
+- **HTTPRoutes:**
+    - Templated Argo Workflows / Argo CD / Harbor / JupyterHub HTTPRoutes and applied them via `envsubst` for consistency.
+- **Documentation:**
+    - Updated README to align with new hostname variables, MinIO/StarRocks access, and Gateway templating.
+
+### Fixed
+- **Makefiles:**
+    - Hardened env file loading for MinIO/StarRocks/Cloudflare secrets to better handle special characters.
+    - Improved uninstall robustness for templated HTTPRoutes by ensuring required variables are provided during `envsubst`.
 
 ## [v0.6.7] - 2026-03-11
 

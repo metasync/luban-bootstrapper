@@ -23,7 +23,11 @@ install:
 		--set persistence.enabled=true \
 		--wait
 	@echo "Applying Gateway configuration..."
-	@$(KUBECTL) apply -f gateway.yaml
+	@export HARBOR_NAMESPACE=$(HARBOR_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		HARBOR_HOST=$(HARBOR_HOST) \
+		HARBOR_PUBLIC_HOST=$(HARBOR_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) apply -f -
 
 get-password:
 	@echo "Retrieving Harbor admin password..."
@@ -32,7 +36,11 @@ get-password:
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."
-	@$(KUBECTL) delete -f gateway.yaml --ignore-not-found=true || true
+	@export HARBOR_NAMESPACE=$(HARBOR_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		HARBOR_HOST=$(HARBOR_HOST) \
+		HARBOR_PUBLIC_HOST=$(HARBOR_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Uninstalling Harbor..."
 	@helm uninstall harbor -n $(HARBOR_NAMESPACE) || true
 	@echo "Deleting namespace $(HARBOR_NAMESPACE)..."

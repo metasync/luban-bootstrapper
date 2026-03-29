@@ -1,0 +1,85 @@
+starrocks:
+  starrocksCluster:
+    enabledBe: false
+    enabledCn: true
+
+    componentValues:
+      image:
+        tag: "3.5-latest"
+
+  starrocksFESpec:
+    replicas: 1
+    service:
+      type: "LoadBalancer"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1
+        memory: 2Gi
+    feEnvVars:
+      - name: IGNORE_MAX_USER_PROCESSES_CHECK
+        value: "true"
+      - name: IGNORE_MAX_FILES_CHECK
+        value: "true"
+    storageSpec:
+      name: ""
+      storageSize: 5Gi
+      logStorageSize: 2Gi
+    config: |
+      LOG_DIR = ${STARROCKS_HOME}/log
+      DATE = "$(date +%Y%m%d-%H%M%S)"
+      JAVA_OPTS="-Dlog4j2.formatMsgNoLookups=true -Xmx512m -XX:+UseG1GC -Xlog:gc*:${LOG_DIR}/fe.gc.log.$DATE:time"
+      http_port = 8030
+      rpc_port = 9020
+      query_port = 9030
+      edit_log_port = 9010
+      mysql_service_nio_enabled = true
+      sys_log_level = INFO
+      min_graceful_exit_time_second = 25
+      run_mode = shared_data
+      cloud_native_storage_type = S3
+      aws_s3_endpoint = http://minio.minio.svc.cluster.local:9000
+      aws_s3_path = starrocks
+      aws_s3_region = us-east-1
+      aws_s3_access_key = ${MINIO_ROOT_USER}
+      aws_s3_secret_key = ${MINIO_ROOT_PASSWORD}
+      aws_s3_use_instance_profile = false
+      aws_s3_use_aws_sdk_default_behavior = false
+      enable_load_volume_from_conf = true
+
+  starrocksCnSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+    cnEnvVars:
+      - name: IGNORE_MAX_USER_PROCESSES_CHECK
+        value: "true"
+      - name: IGNORE_MAX_FILES_CHECK
+        value: "true"
+    storageSpec:
+      name: ""
+      storageSize: 20Gi
+      logStorageSize: 2Gi
+      spillStorageSize: 0Gi
+    config: |
+      sys_log_level = INFO
+      thrift_port = 9060
+      webserver_port = 8040
+      heartbeat_service_port = 9050
+      brpc_port = 8060
+      run_mode = shared_data
+      cloud_native_storage_type = S3
+      aws_s3_endpoint = http://minio.minio.svc.cluster.local:9000
+      aws_s3_path = starrocks
+      aws_s3_region = us-east-1
+      aws_s3_access_key = ${MINIO_ROOT_USER}
+      aws_s3_secret_key = ${MINIO_ROOT_PASSWORD}
+      aws_s3_use_instance_profile = false
+      aws_s3_use_aws_sdk_default_behavior = false

@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: gateway
+  name: ${GATEWAY_NAMESPACE}
 ---
 # Envoy GatewayClass and Gateway for HTTPS entrypoints
 # to Argo Workflows and Argo CD.
@@ -19,14 +19,14 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: luban-gateway
-  namespace: gateway
+  namespace: ${GATEWAY_NAMESPACE}
 spec:
   gatewayClassName: envoy
   listeners:
   - name: luban-local
     protocol: HTTPS
     port: 443
-    hostname: "*.luban.k8s.orb.local"
+    hostname: "*.${K8S_DOMAIN}"
     tls:
       mode: Terminate
       certificateRefs:
@@ -38,7 +38,7 @@ spec:
   - name: apps-local
     protocol: HTTPS
     port: 443
-    hostname: "*.apps.k8s.orb.local"
+    hostname: "*.${APPS_DOMAIN}"
     tls:
       mode: Terminate
       certificateRefs:
@@ -50,7 +50,7 @@ spec:
   - name: luban-public
     protocol: HTTPS
     port: 443
-    hostname: "*.luban.metasync.cc"
+    hostname: "*.${LUBAN_PUBLIC_DOMAIN}"
     tls:
       mode: Terminate
       certificateRefs:
@@ -62,7 +62,7 @@ spec:
   - name: apps-public
     protocol: HTTPS
     port: 443
-    hostname: "*.apps.metasync.cc"
+    hostname: "*.${APPS_PUBLIC_DOMAIN}"
     tls:
       mode: Terminate
       certificateRefs:

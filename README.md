@@ -4,21 +4,27 @@ This repository provides Makefile-based tooling to install and manage a comprehe
 
 The stack includes:
 
-- **Argo Workflows** (Workflow orchestration)
-- **Argo CD** (GitOps application delivery)
-- **Argo Events** (Event-driven dependency manager)
-- **Harbor** (Container Registry)
-- **JupyterHub** (Multi-user Notebook Platform)
-- **kpack** (Cloud Native Buildpacks for Kubernetes)
-- **Kubernetes Replicator** (Secret/ConfigMap replication)
-- **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
-- **cert-manager** (TLS certificate management with a local CA)
+- **Core CI/CD stack (installed via `make all`)**
+  - **Argo Workflows** (Workflow orchestration)
+  - **Argo CD** (GitOps application delivery)
+  - **Argo Events** (Event-driven dependency manager)
+  - **Harbor** (Container Registry)
+  - **kpack** (Cloud Native Buildpacks for Kubernetes)
+  - **Kubernetes Replicator** (Secret/ConfigMap replication)
+  - **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
+  - **cert-manager** (TLS certificate management with a local CA)
+
+- **Optional stack components (installed separately)**
+  - **JupyterHub** (Multi-user Notebook Platform)
+  - **MinIO** (S3-compatible object storage)
+  - **StarRocks (shared-data)** (High-performance Analytical Database; requires MinIO)
 
 ## Prerequisites
 
 - **macOS** (Optimized for `base64 -D` and OrbStack domains)
 - **Kubernetes Cluster** (Tested with [OrbStack](https://orbstack.dev/))
 - **Internet Access** (To pull Helm charts and container images)
+- `envsubst` (used to render Gateway/HTTPRoute templates; comes with `gettext`)
 
 The following CLI tools can be installed automatically via `make cli`:
 - `kubectl`
@@ -32,16 +38,24 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[Makefile](./Makefile)**: Root orchestration. Installs infrastructure first, then applications.
 - **[Makefile.env](./Makefile.env)**: Shared configuration (versions, namespaces, domains).
 - **[cli/](./cli/)**: CLI installation logic (pack, kp, helm, kubectl).
+
+### Core CI/CD stack (`make all`)
+
 - **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config.
 - **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
 - **[argo-events/](./argo-events/)**: Argo Events Helm install.
 - **[harbor/](./harbor/)**: Harbor Helm install & Gateway config.
-- **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config.
 - **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
 - **[kubernetes-replicator/](./kubernetes-replicator/)**: Kubernetes Replicator Helm install.
 - **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
 - **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
 - **[kpack/](./kpack/)**: kpack raw manifest install.
+
+### Optional components
+
+- **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config.
+- **[minio/](./minio/)**: MinIO Helm install & Gateway config.
+- **[starrocks/](./starrocks/)**: StarRocks Operator Helm install (shared-data; requires MinIO).
 
 ## Configuration
 
@@ -53,6 +67,8 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Argo Events (App v1.9.9)
   - Harbor (App v2.14.0)
   - JupyterHub (App v5.4.3)
+  - MinIO (RELEASE.2024-12-18T13-15-44Z)
+  - StarRocks Operator (App v1.11.4)
   - kpack (v0.17.1)
   - Kubernetes Replicator (v2.12.3)
   - Envoy Gateway (v1.6.2)
@@ -65,6 +81,10 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
 - **Namespaces**: Define where each component is installed.
 - **Domains**:
   - `K8S_DOMAIN` (default: `luban.k8s.orb.local`)
+  - `LUBAN_PUBLIC_DOMAIN` (default: `luban.metasync.cc`)
+  - `APPS_DOMAIN` (default: `apps.k8s.orb.local`)
+  - `APPS_PUBLIC_DOMAIN` (default: `apps.metasync.cc`)
+  - `LETSENCRYPT_EMAIL` (default: `ci@metasync.cc`)
   - `ARGO_WORKFLOWS_HOST` (`argo-workflows.luban.k8s.orb.local`)
   - `ARGO_CD_HOST` (`argocd.luban.k8s.orb.local`)
   - `HARBOR_HOST` (`harbor.luban.k8s.orb.local`)
@@ -84,6 +104,29 @@ To enable public access via Cloudflare, you must provide your Cloudflare API Tok
    ```
    *Note: The token requires `Zone:DNS:Edit` permissions for your domain.*
 
+#### MinIO (Required for StarRocks shared-data)
+
+StarRocks is configured to run in **shared-data** mode (FE + CN), which requires an S3-compatible object store.
+This repo installs **MinIO** separately and stores its credentials in a Kubernetes Secret created from a local env file.
+
+1. Create a file `secrets/minio.env` (this file is git-ignored).
+2. Add the required keys:
+   ```bash
+   MINIO_ROOT_USER=your-minio-user
+   MINIO_ROOT_PASSWORD=your-minio-password
+   ```
+3. Install MinIO first, then StarRocks:
+   ```bash
+   make minio
+   make starrocks
+   ```
+
+MinIO Console hostnames:
+- Local: `https://minio-console.<K8S_DOMAIN>`
+- Public: `https://minio-console.<LUBAN_PUBLIC_DOMAIN>`
+
+MinIO Console credentials are `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` from `secrets/minio.env`.
+
 ### 2. Install CLIs
 
 Ensure you have the necessary tools installed:
@@ -93,22 +136,20 @@ make cli
 ```
 Or install them individually: `make helm-cli`, `make kubectl-cli`, `make pack-cli`, `make kp-cli`.
 
-### 2. Install the Stack
+### 3. Install the Core CI/CD stack
 
-To install infrastructure (Cert Manager, Envoy Gateway) and all applications:
+To install core infrastructure and all default CI/CD components:
 
 ```bash
 make all
 ```
 
-Or install components individually:
+### 4. Install optional components
 
 ```bash
-make cert-manager envoy-gateway gateway
-make argo-workflows
-make argo-cd
-make harbor
 make jupyterhub
+make minio
+make starrocks
 ```
 
 ## Accessing the UIs
@@ -117,14 +158,16 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 
 | Component | Local URL | Public URL | Notes |
 |-----------|-----------|------------|-------|
-| **Argo Workflows** | `https://argo-workflows.luban.k8s.orb.local` | `https://argo-workflows.luban.metasync.cc` | Requires Token |
-| **Argo CD** | `https://argocd.luban.k8s.orb.local` | `https://argocd.luban.metasync.cc` | User: `admin` |
-| **Harbor** | `https://harbor.luban.k8s.orb.local` | `https://harbor.luban.metasync.cc` | User: `admin` |
-| **JupyterHub** | `https://jupyterhub.luban.k8s.orb.local` | `https://jupyterhub.luban.metasync.cc` | Any User |
+| **Argo Workflows** | `https://argo-workflows.<K8S_DOMAIN>` | `https://argo-workflows.<LUBAN_PUBLIC_DOMAIN>` | Requires Token |
+| **Argo CD** | `https://argocd.<K8S_DOMAIN>` | `https://argocd.<LUBAN_PUBLIC_DOMAIN>` | User: `admin` |
+| **Harbor** | `https://harbor.<K8S_DOMAIN>` | `https://harbor.<LUBAN_PUBLIC_DOMAIN>` | User: `admin` |
+| **JupyterHub** | `https://jupyterhub.<K8S_DOMAIN>` | `https://jupyterhub.<LUBAN_PUBLIC_DOMAIN>` | Any User |
+| **MinIO Console** | `https://minio-console.<K8S_DOMAIN>` | `https://minio-console.<LUBAN_PUBLIC_DOMAIN>` | User: `MINIO_ROOT_USER` |
+| **StarRocks FE** | `https://starrocks.<K8S_DOMAIN>` | `https://starrocks.<LUBAN_PUBLIC_DOMAIN>` | User: `root` (empty password) |
 
-New services can be exposed by binding an `HTTPRoute` to the `luban-local` listener on `luban-gateway` with a `*.luban.k8s.orb.local` hostname (or `luban-public` for `*.luban.metasync.cc`).
+New services can be exposed by binding an `HTTPRoute` to the `luban-local` listener on `luban-gateway` with a `*.<K8S_DOMAIN>` hostname (or `luban-public` for `*.<LUBAN_PUBLIC_DOMAIN>`).
 
-Applications can be exposed using the `*.apps.k8s.orb.local` (local) or `*.apps.metasync.cc` (public) wildcard domains.
+Applications can be exposed using the `*.<APPS_DOMAIN>` (local) or `*.<APPS_PUBLIC_DOMAIN>` (public) wildcard domains.
 
 ### Authentication
 
@@ -156,16 +199,25 @@ To retrieve the initial `admin` password:
 make -C harbor get-password
 ```
 
+**StarRocks:**
+The FE HTTP endpoint is protected by HTTP Basic Auth. Default user is `root` with an empty password.
+
+To connect via SQL clients (e.g. DBeaver), use the MySQL protocol on FE port `9030`.
+
+Example JDBC URLs:
+- LoadBalancer: get the FE IP via `kubectl -n starrocks get svc kube-starrocks-fe-service` then use `jdbc:mysql://<fe-ip>:9030`
+- Port-forward: `kubectl -n starrocks port-forward svc/kube-starrocks-fe-service 9030:9030` then `jdbc:mysql://127.0.0.1:9030`
+
 ### DNS & TLS
 
 - **DNS**:
   - **Local**:
     - **OrbStack**: Automatically resolves `*.k8s.orb.local` to your cluster.
-    - **Other**: Add entries to `/etc/hosts` pointing to your cluster IP:
+    - **Other**: Add entries to `/etc/hosts` pointing to the Gateway IP:
       ```
-      127.0.0.1 argo-workflows.luban.k8s.orb.local argocd.luban.k8s.orb.local harbor.luban.k8s.orb.local jupyterhub.luban.k8s.orb.local
+      <gateway-ip> argo-workflows.<K8S_DOMAIN> argocd.<K8S_DOMAIN> harbor.<K8S_DOMAIN> jupyterhub.<K8S_DOMAIN> minio-console.<K8S_DOMAIN> starrocks.<K8S_DOMAIN>
       ```
-  - **Public**: Cloudflare manages `*.metasync.cc`.
+  - **Public**: Cloudflare manages `*.<LUBAN_PUBLIC_DOMAIN>`.
 - **TLS**:
   - **Local**: A local CA is generated in the `gateway` namespace.
     - To trust the CA, extract the certificate:

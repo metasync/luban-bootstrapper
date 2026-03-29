@@ -26,7 +26,11 @@ install:
 	@echo "Applying workflow RBAC (ServiceAccount and RoleBinding)..."
 	@$(KUBECTL) apply -n $(ARGO_WORKFLOWS_NAMESPACE) -f workflow-rbac.yaml
 	@echo "Applying Gateway configuration..."
-	@$(KUBECTL) apply -f gateway.yaml
+	@export ARGO_WORKFLOWS_NAMESPACE=$(ARGO_WORKFLOWS_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		ARGO_WORKFLOWS_HOST=$(ARGO_WORKFLOWS_HOST) \
+		ARGO_WORKFLOWS_PUBLIC_HOST=$(ARGO_WORKFLOWS_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) apply -f -
 	@echo "Applying Gateway timeout policy..."
 	@$(KUBECTL) apply -f argo-timeout.yaml
 	@POD=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get pod -l app.kubernetes.io/name=argo-workflows-server --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}'); \
@@ -41,7 +45,11 @@ get-token:
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."
-	@$(KUBECTL) delete -f gateway.yaml --ignore-not-found=true || true
+	@export ARGO_WORKFLOWS_NAMESPACE=$(ARGO_WORKFLOWS_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		ARGO_WORKFLOWS_HOST=$(ARGO_WORKFLOWS_HOST) \
+		ARGO_WORKFLOWS_PUBLIC_HOST=$(ARGO_WORKFLOWS_PUBLIC_HOST) && \
+		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Uninstalling Argo Workflows..."
 	@helm uninstall argo-workflows -n $(ARGO_WORKFLOWS_NAMESPACE) || true
 	@echo "Deleting namespace $(ARGO_WORKFLOWS_NAMESPACE)..."

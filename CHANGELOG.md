@@ -3,6 +3,27 @@
 ## [Unreleased]
 
 
+## [v0.6.9] - 2026-03-30
+
+### Changed
+- **Argo CD:**
+    - Upgraded to App v3.3.6 (Chart v9.4.17).
+- **Argo Workflows:**
+    - Upgraded to App v4.0.3 (Chart v1.0.6).
+    - Upgraded `argo` CLI to v4.0.3.
+- **Argo Events:**
+    - Upgraded to App v1.9.10 (Chart v2.4.20).
+- **Makefiles:**
+    - Increased Helm `--timeout` for Argo Workflows and Argo Events installs to improve reliability under slow API/server conditions.
+
+### Fixed
+- **Argo Workflows:**
+    - Fixed upgrade failures when moving to v4 by removing legacy controller config keys from `argo-workflows-workflow-controller-configmap`.
+
+### Documentation
+- Updated README component version references and Argo Workflows example manifest link.
+
+
 ## [v0.6.8] - 2026-03-29
 
 ### Added

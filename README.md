@@ -62,9 +62,9 @@ The following CLI tools can be installed automatically via `make cli`:
 Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
 
 - **Component Versions**:
-  - Argo Workflows (App v3.7.7)
-  - Argo CD (App v3.2.5)
-  - Argo Events (App v1.9.9)
+  - Argo Workflows (App v4.0.3)
+  - Argo CD (App v3.3.6)
+  - Argo Events (App v1.9.10)
   - Harbor (App v2.14.0)
   - JupyterHub (App v5.4.3)
   - MinIO (RELEASE.2024-12-18T13-15-44Z)
@@ -238,7 +238,7 @@ Submit a "Hello World" workflow:
 
 ```bash
 # Submit a workflow using the installed version examples
-kubectl -n argo create -f https://github.com/argoproj/argo-workflows/raw/v3.7.7/examples/hello-world.yaml
+kubectl -n argo create -f https://github.com/argoproj/argo-workflows/raw/v4.0.3/examples/hello-world.yaml
 
 # Check status
 kubectl -n argo get workflows

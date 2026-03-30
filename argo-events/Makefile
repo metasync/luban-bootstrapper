@@ -16,6 +16,7 @@ install:
 		--namespace $(ARGO_EVENTS_NAMESPACE) \
 		--create-namespace \
 		--version $(ARGO_EVENTS_CHART_VERSION) \
+		--timeout 15m \
 		--wait
 
 uninstall:

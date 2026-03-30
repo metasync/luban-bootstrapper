@@ -15,13 +15,16 @@ install:
 	@echo "Installing Argo Workflows (Chart v$(ARGO_WORKFLOWS_CHART_VERSION))..."
 	# Disable built-in TLS (secure=false) to allow offloading TLS to Envoy Gateway.
 	# The ServiceAccount 'workflow-runner' is configured as the default for workflows.
+	@$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get configmap argo-workflows-workflow-controller-configmap >/dev/null 2>&1 && \
+		$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) patch configmap argo-workflows-workflow-controller-configmap --type merge \
+			-p '{"data":{"nodeEvents":null,"workflowDefaults":null,"workflowEvents":null,"workflowRestrictions":null}}' >/dev/null 2>&1 || true
 	@helm upgrade --install argo-workflows argo/argo-workflows \
 		--namespace $(ARGO_WORKFLOWS_NAMESPACE) \
 		--create-namespace \
 		--version $(ARGO_WORKFLOWS_CHART_VERSION) \
 		--set server.secure=false \
-		--set server.extraArgs={--secure=false} \
 		--set controller.workflowDefaults.spec.serviceAccountName=workflow-runner \
+		--timeout 15m \
 		--wait
 	@echo "Applying workflow RBAC (ServiceAccount and RoleBinding)..."
 	@$(KUBECTL) apply -n $(ARGO_WORKFLOWS_NAMESPACE) -f workflow-rbac.yaml

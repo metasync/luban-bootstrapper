@@ -33,6 +33,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make harbor" "Install Harbor (Chart $(HARBOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make jupyterhub" "Install JupyterHub (Chart $(JUPYTERHUB_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make minio" "Install MinIO (Chart $(MINIO_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make minio-version" "Show MinIO image/pod version"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make starrocks" "Install StarRocks Operator (Chart $(STARROCKS_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make pack-cli" "Install pack CLI (v$(PACK_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kp-cli" "Install kp CLI (v$(KP_CLI_VERSION))"
@@ -145,6 +146,9 @@ jupyterhub:
 minio:
 	@echo "=== Installing MinIO ==="
 	@$(MAKE) -C minio install
+
+minio-version:
+	@$(MAKE) -C minio version
 
 starrocks:
 	@echo "=== Installing StarRocks Operator ==="

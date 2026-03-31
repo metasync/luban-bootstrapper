@@ -65,14 +65,14 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Argo Workflows (App v4.0.3)
   - Argo CD (App v3.3.6)
   - Argo Events (App v1.9.10)
-  - Harbor (App v2.14.0)
-  - JupyterHub (App v5.4.3)
-  - MinIO (RELEASE.2024-12-18T13-15-44Z)
+  - Harbor (App v2.14.3)
+  - JupyterHub (App v5.4.4)
+  - MinIO (Image RELEASE.2025-10-15T17-29-55Z)
   - StarRocks Operator (App v1.11.4)
   - kpack (v0.17.1)
   - Kubernetes Replicator (v2.12.3)
-  - Envoy Gateway (v1.6.2)
-  - cert-manager (v1.19.2)
+  - Envoy Gateway (v1.7.1)
+  - cert-manager (v1.20.1)
 - **CLI Versions**:
   - Helm (v4.0.5)
   - Kubectl (v1.35.0)
@@ -109,15 +109,19 @@ To enable public access via Cloudflare, you must provide your Cloudflare API Tok
 StarRocks is configured to run in **shared-data** mode (FE + CN), which requires an S3-compatible object store.
 This repo installs **MinIO** separately and stores its credentials in a Kubernetes Secret created from a local env file.
 
+This project uses the legacy `minio/minio` Helm chart (Chart v5.4.0) but pins the **server image** to `RELEASE.2025-10-15T17-29-55Z`. Since MinIO no longer publishes container images for some newer tags, the image may need to be built locally during installation.
+
 1. Create a file `secrets/minio.env` (this file is git-ignored).
 2. Add the required keys:
    ```bash
    MINIO_ROOT_USER=your-minio-user
    MINIO_ROOT_PASSWORD=your-minio-password
    ```
+3. Ensure you have `git`, `go`, and Docker available if a local image build is required.
 3. Install MinIO first, then StarRocks:
    ```bash
    make minio
+   make minio-version
    make starrocks
    ```
 

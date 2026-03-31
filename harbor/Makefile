@@ -21,6 +21,7 @@ install:
 		--set expose.type=clusterIP \
 		--set expose.tls.enabled=false \
 		--set persistence.enabled=true \
+		--timeout 10m \
 		--wait
 	@echo "Applying Gateway configuration..."
 	@export HARBOR_NAMESPACE=$(HARBOR_NAMESPACE) \

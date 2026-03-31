@@ -12,14 +12,14 @@ install:
 	@helm repo add jetstack $(JETSTACK_REPO_URL)
 	@helm repo update jetstack
 	@echo "Installing cert-manager (Chart v$(CERT_MANAGER_CHART_VERSION))..."
-	# installCRDs=true is required to install the CustomResourceDefinitions
-	# (Certificate, Issuer, ClusterIssuer, etc.) alongside the chart.
+	# crds.enabled=true installs the CustomResourceDefinitions alongside the chart.
 	@helm upgrade --install cert-manager jetstack/cert-manager \
 		--namespace $(CERT_MANAGER_NAMESPACE) \
 		--create-namespace \
 		--version v$(CERT_MANAGER_CHART_VERSION) \
-		--set installCRDs=true \
+		--set crds.enabled=true \
 		--set extraArgs="{--dns01-recursive-nameservers=8.8.8.8:53,--dns01-recursive-nameservers-only=true}" \
+		--timeout 10m \
 		--wait
 
 uninstall:

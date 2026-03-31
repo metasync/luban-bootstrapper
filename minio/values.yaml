@@ -3,6 +3,14 @@ replicas: 1
 drivesPerNode: 1
 pools: 1
 
+image:
+  repository: ${MINIO_IMAGE_REPOSITORY}
+  tag: ${MINIO_IMAGE_TAG}
+
+mcImage:
+  repository: ${MINIO_MC_IMAGE_REPOSITORY}
+  tag: ${MINIO_MC_IMAGE_TAG}
+
 existingSecret: "minio-auth"
 
 persistence:

@@ -21,6 +21,7 @@ install:
 		--set proxy.service.type=ClusterIP \
 		--set proxy.https.enabled=false \
 		--set ingress.enabled=false \
+		--timeout 10m \
 		--wait
 	@echo "Applying Gateway configuration..."
 	@export JUPYTERHUB_NAMESPACE=$(JUPYTERHUB_NAMESPACE) \

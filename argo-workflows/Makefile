@@ -24,7 +24,7 @@ install:
 		--version $(ARGO_WORKFLOWS_CHART_VERSION) \
 		--set server.secure=false \
 		--set controller.workflowDefaults.spec.serviceAccountName=workflow-runner \
-		--timeout 15m \
+		--timeout 10m \
 		--wait
 	@echo "Applying workflow RBAC (ServiceAccount and RoleBinding)..."
 	@$(KUBECTL) apply -n $(ARGO_WORKFLOWS_NAMESPACE) -f workflow-rbac.yaml

@@ -3,6 +3,28 @@
 ## [Unreleased]
 
 
+## [v0.6.10] - 2026-03-31
+
+### Changed
+- **Envoy Gateway:**
+    - Upgraded to Chart/App v1.7.1.
+- **cert-manager:**
+    - Upgraded to Chart/App v1.20.1.
+    - Switched to `crds.enabled=true` for CRD installation.
+- **Harbor:**
+    - Upgraded to Chart v1.18.3 (App v2.14.3).
+- **JupyterHub:**
+    - Upgraded to Chart v4.3.3 (App v5.4.4).
+- **MinIO:**
+    - Pinned the server image to `RELEASE.2025-10-15T17-29-55Z` and added a local build flow for environments where upstream images are unavailable.
+    - Added `make minio-version` for quick verification of local image and in-cluster versions.
+- **Makefiles:**
+    - Standardized Helm install/upgrade `--timeout` to `10m`.
+
+### Documentation
+- Updated README component version references and MinIO installation notes.
+
+
 ## [v0.6.9] - 2026-03-30
 
 ### Changed

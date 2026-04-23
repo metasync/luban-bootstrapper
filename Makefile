@@ -11,17 +11,22 @@ RESET := \033[0m
 # and then application components (Argo Workflows, Argo CD, Argo Events, kpack).
 # Also provides targets to install necessary CLIs (pack, helm, kubectl).
 
-.PHONY: help all \
+.PHONY: help infra devops workspace data-platform observability \
 	cert-manager kubernetes-replicator envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks \
+	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks elastic-stack apm-server \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
-	uninstall \
+	uninstall-infra uninstall-devops uninstall-workspace uninstall-data-platform uninstall-observability \
 	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks uninstall-elastic-stack uninstall-apm-server
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make all" "Install infra and all components"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make infra" "Install base cluster infra (cert-manager, gateway)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make devops" "Install core CI/CD and gateway stack"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make workspace" "Install workspace stack (JupyterHub)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make data-platform" "Install data platform stack (MinIO, StarRocks)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make observability" "Install observability stack (Elastic Stack)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make apm-server" "Install APM Server (ECK)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cert-manager" "Install cert-manager (Chart $(CERT_MANAGER_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubernetes-replicator" "Install Kubernetes Replicator (Chart $(KUBERNETES_REPLICATOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make envoy-gateway" "Install Envoy Gateway (Chart $(ENVOY_GATEWAY_CHART_VERSION))"
@@ -41,7 +46,12 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubectl-cli" "Install Kubectl CLI (v$(KUBECTL_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-cli" "Install Argo CLI (v$(ARGO_CLI_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cli" "Install all CLIs (pack, kp, helm, kubectl, argo)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall" "Uninstall all components and infra"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-infra" "Uninstall base cluster infra (cert-manager, gateway)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-devops" "Uninstall core CI/CD stack (keeps infra)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-workspace" "Uninstall workspace stack (JupyterHub)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-data-platform" "Uninstall data platform stack (StarRocks, MinIO)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-observability" "Uninstall observability stack (keeps infra)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-apm-server" "Uninstall APM Server"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-gateway" "Uninstall Gateway API config and local CA issuer"
@@ -89,23 +99,27 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "MINIO_HOST" "Hostname for MinIO Console"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_HOST" "Hostname for StarRocks"
 
-all: cert-manager \
+infra: cert-manager \
 	kubernetes-replicator \
 	envoy-gateway \
-	gateway \
+	gateway
+
+devops: infra \
 	argo-workflows \
 	argo-cd \
 	argo-events \
 	kpack \
 	harbor
 
+workspace: infra jupyterhub
+
+data-platform: infra minio starrocks
+
+observability: infra elastic-stack apm-server
+
 cert-manager:
 	@echo "=== Installing cert-manager ==="
 	@$(MAKE) -C cert-manager install
-
-reflector:
-	@echo "=== Installing Reflector ==="
-	@$(MAKE) -C reflector install
 
 kubernetes-replicator:
 	@echo "=== Installing Kubernetes Replicator ==="
@@ -154,6 +168,14 @@ starrocks:
 	@echo "=== Installing StarRocks Operator ==="
 	@$(MAKE) -C starrocks install
 
+elastic-stack:
+	@echo "=== Installing Elastic Stack ==="
+	@$(MAKE) -C elastic-stack install
+
+apm-server: elastic-stack
+	@echo "=== Installing APM Server ==="
+	@$(MAKE) -C elastic-stack install-apm-server
+
 cli:
 	@echo "=== Installing all CLIs ==="
 	@$(MAKE) -C cli install-all-cli
@@ -178,18 +200,30 @@ argo-cli:
 	@echo "=== Installing Argo CLI ==="
 	@$(MAKE) -C cli install-argo-cli
 
-uninstall: uninstall-argo-workflows \
-	uninstall-argo-cd \
-	uninstall-argo-events \
-	uninstall-kpack \
-	uninstall-harbor \
-	uninstall-jupyterhub \
-	uninstall-starrocks \
-	uninstall-minio \
-	uninstall-gateway \
+uninstall-infra: uninstall-gateway \
 	uninstall-envoy-gateway \
 	uninstall-kubernetes-replicator \
 	uninstall-cert-manager
+
+uninstall-devops: uninstall-harbor \
+	uninstall-kpack \
+	uninstall-argo-events \
+	uninstall-argo-cd \
+	uninstall-argo-workflows
+
+uninstall-workspace: uninstall-jupyterhub
+
+uninstall-data-platform: uninstall-starrocks uninstall-minio
+
+uninstall-observability: uninstall-apm-server uninstall-elastic-stack
+
+uninstall-apm-server:
+	@echo "=== Uninstalling APM Server ==="
+	@$(MAKE) -C elastic-stack uninstall-apm-server
+
+uninstall-elastic-stack:
+	@echo "=== Uninstalling Elastic Stack ==="
+	@$(MAKE) -C elastic-stack uninstall
 
 uninstall-harbor:
 	@echo "=== Uninstalling Harbor ==="

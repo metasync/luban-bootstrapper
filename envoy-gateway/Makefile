@@ -8,13 +8,17 @@ ENVOY_GATEWAY_CHART_URL ?= oci://docker.io/envoyproxy/gateway-helm
 .PHONY: install uninstall
 
 install:
-	@echo "=== Installing Envoy Gateway ==="
-	@helm upgrade --install eg $(ENVOY_GATEWAY_CHART_URL) \
-		--version v$(ENVOY_GATEWAY_CHART_VERSION) \
-		--namespace $(ENVOY_GATEWAY_NAMESPACE) \
-		--create-namespace \
-		--values values.yaml \
-		--wait
+	@if [ "$(FORCE)" != "1" ] && helm status eg -n $(ENVOY_GATEWAY_NAMESPACE) >/dev/null 2>&1; then \
+		echo "envoy-gateway already installed (set FORCE=1 to upgrade)"; \
+	else \
+		echo "=== Installing Envoy Gateway ==="; \
+		helm upgrade --install eg $(ENVOY_GATEWAY_CHART_URL) \
+			--version v$(ENVOY_GATEWAY_CHART_VERSION) \
+			--namespace $(ENVOY_GATEWAY_NAMESPACE) \
+			--create-namespace \
+			--values values.yaml \
+			--wait; \
+	fi
 
 uninstall:
 	@echo "=== Uninstalling Envoy Gateway ==="

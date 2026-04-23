@@ -23,28 +23,32 @@ create-secret:
 	fi
 
 install:
-	@echo "Ensuring cert-manager webhook is available before applying gateway resources..."
-	@$(KUBECTL) wait -n $(CERT_MANAGER_NAMESPACE) deployment/cert-manager-webhook --for=condition=Available --timeout=5m
-	@echo "Applying gateway resources..."
-	@export GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
-		K8S_DOMAIN=$(K8S_DOMAIN) \
-		LUBAN_PUBLIC_DOMAIN=$(LUBAN_PUBLIC_DOMAIN) \
-		APPS_DOMAIN=$(APPS_DOMAIN) \
-		APPS_PUBLIC_DOMAIN=$(APPS_PUBLIC_DOMAIN) && \
-		envsubst < gateway.yaml | $(KUBECTL) apply -f -
-	@echo "Creating Cloudflare secret..."
-	@$(MAKE) create-secret
-	@echo "Applying local ingress resources..."
-	@export GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
-		K8S_DOMAIN=$(K8S_DOMAIN) \
-		APPS_DOMAIN=$(APPS_DOMAIN) && \
-		envsubst < local-ingress.yaml | $(KUBECTL) apply -f -
-	@echo "Applying public ingress resources..."
-	@export GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
-		LETSENCRYPT_EMAIL=$(LETSENCRYPT_EMAIL) \
-		LUBAN_PUBLIC_DOMAIN=$(LUBAN_PUBLIC_DOMAIN) \
-		APPS_PUBLIC_DOMAIN=$(APPS_PUBLIC_DOMAIN) && \
-		envsubst < public-ingress.yaml | $(KUBECTL) apply -f -
+	@if [ "$(FORCE)" != "1" ] && $(KUBECTL) -n $(GATEWAY_NAMESPACE) get gateway luban-gateway >/dev/null 2>&1; then \
+		echo "gateway already installed (set FORCE=1 to re-apply)"; \
+	else \
+		echo "Ensuring cert-manager webhook is available before applying gateway resources..."; \
+		$(KUBECTL) wait -n $(CERT_MANAGER_NAMESPACE) deployment/cert-manager-webhook --for=condition=Available --timeout=5m; \
+		echo "Applying gateway resources..."; \
+		export GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+			K8S_DOMAIN=$(K8S_DOMAIN) \
+			LUBAN_PUBLIC_DOMAIN=$(LUBAN_PUBLIC_DOMAIN) \
+			APPS_DOMAIN=$(APPS_DOMAIN) \
+			APPS_PUBLIC_DOMAIN=$(APPS_PUBLIC_DOMAIN) && \
+			envsubst < gateway.yaml | $(KUBECTL) apply -f -; \
+		echo "Creating Cloudflare secret..."; \
+		$(MAKE) create-secret; \
+		echo "Applying local ingress resources..."; \
+		export GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+			K8S_DOMAIN=$(K8S_DOMAIN) \
+			APPS_DOMAIN=$(APPS_DOMAIN) && \
+			envsubst < local-ingress.yaml | $(KUBECTL) apply -f -; \
+		echo "Applying public ingress resources..."; \
+		export GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+			LETSENCRYPT_EMAIL=$(LETSENCRYPT_EMAIL) \
+			LUBAN_PUBLIC_DOMAIN=$(LUBAN_PUBLIC_DOMAIN) \
+			APPS_PUBLIC_DOMAIN=$(APPS_PUBLIC_DOMAIN) && \
+			envsubst < public-ingress.yaml | $(KUBECTL) apply -f -; \
+	fi
 
 uninstall:
 	@echo "Uninstalling gateway resources..."

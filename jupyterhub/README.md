@@ -68,6 +68,12 @@ make install
 
 Or from the project root:
 ```bash
+make workspace
+```
+
+Or install only JupyterHub from the project root:
+
+```bash
 make jupyterhub
 ```
 

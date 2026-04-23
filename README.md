@@ -4,7 +4,7 @@ This repository provides Makefile-based tooling to install and manage a comprehe
 
 The stack includes:
 
-- **Core CI/CD stack (installed via `make all`)**
+- **Core CI/CD stack (installed via `make devops`)**
   - **Argo Workflows** (Workflow orchestration)
   - **Argo CD** (GitOps application delivery)
   - **Argo Events** (Event-driven dependency manager)
@@ -15,9 +15,8 @@ The stack includes:
   - **cert-manager** (TLS certificate management with a local CA)
 
 - **Optional stack components (installed separately)**
-  - **JupyterHub** (Multi-user Notebook Platform)
-  - **MinIO** (S3-compatible object storage)
-  - **StarRocks (shared-data)** (High-performance Analytical Database; requires MinIO)
+  - **Workspace**: **JupyterHub** (Multi-user Notebook Platform)
+  - **Data platform**: **MinIO** (S3-compatible object storage) + **StarRocks (shared-data)** (High-performance Analytical Database)
 
 ## Prerequisites
 
@@ -39,7 +38,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[Makefile.env](./Makefile.env)**: Shared configuration (versions, namespaces, domains).
 - **[cli/](./cli/)**: CLI installation logic (pack, kp, helm, kubectl).
 
-### Core CI/CD stack (`make all`)
+### Core CI/CD stack (`make devops`)
 
 - **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config.
 - **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
@@ -56,6 +55,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config.
 - **[minio/](./minio/)**: MinIO Helm install & Gateway config.
 - **[starrocks/](./starrocks/)**: StarRocks Operator Helm install (shared-data; requires MinIO).
+- **[elastic-stack/](./elastic-stack/)**: Elastic Stack (Elasticsearch + Kibana) via ECK Operator.
 
 ## Configuration
 
@@ -118,7 +118,7 @@ This project uses the legacy `minio/minio` Helm chart (Chart v5.4.0) but pins th
    MINIO_ROOT_PASSWORD=your-minio-password
    ```
 3. Ensure you have `git`, `go`, and Docker available if a local image build is required.
-3. Install MinIO first, then StarRocks:
+3. Install MinIO first, then StarRocks (or install both via `make data-platform`):
    ```bash
    make minio
    make minio-version
@@ -142,13 +142,27 @@ Or install them individually: `make helm-cli`, `make kubectl-cli`, `make pack-cl
 
 ### 3. Install the Core CI/CD stack
 
-To install core infrastructure and all default CI/CD components:
+To install base infrastructure plus all default CI/CD components:
 
 ```bash
-make all
+make devops
+```
+
+If you only want the base cluster infrastructure (Gateway + cert-manager):
+
+```bash
+make infra
 ```
 
 ### 4. Install optional components
+
+```bash
+make workspace
+make data-platform
+make observability
+```
+
+Or install them individually:
 
 ```bash
 make jupyterhub
@@ -168,6 +182,7 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 | **JupyterHub** | `https://jupyterhub.<K8S_DOMAIN>` | `https://jupyterhub.<LUBAN_PUBLIC_DOMAIN>` | Any User |
 | **MinIO Console** | `https://minio-console.<K8S_DOMAIN>` | `https://minio-console.<LUBAN_PUBLIC_DOMAIN>` | User: `MINIO_ROOT_USER` |
 | **StarRocks FE** | `https://starrocks.<K8S_DOMAIN>` | `https://starrocks.<LUBAN_PUBLIC_DOMAIN>` | User: `root` (empty password) |
+| **Kibana** | `https://kibana.<K8S_DOMAIN>` | `https://kibana.<LUBAN_PUBLIC_DOMAIN>` | User: `elastic` |
 
 New services can be exposed by binding an `HTTPRoute` to the `luban-local` listener on `luban-gateway` with a `*.<K8S_DOMAIN>` hostname (or `luban-public` for `*.<LUBAN_PUBLIC_DOMAIN>`).
 
@@ -201,6 +216,37 @@ To retrieve the initial `admin` password:
 
 ```bash
 make -C harbor get-password
+```
+
+**Kibana (Elastic Stack via ECK):**
+
+Username is `elastic`. To get the password:
+
+```bash
+make -C elastic-stack get-elastic-password
+```
+
+**APM Server (Elastic Stack via ECK):**
+
+The APM Server endpoint is available inside the cluster at:
+
+- `http://apm-server-apm-http.elastic-stack.svc:8200`
+
+To get the APM secret token:
+
+```bash
+make -C elastic-stack get-apm-secret-token
+```
+
+OTLP endpoints:
+
+- gRPC: `http://apm-server-apm-http.elastic-stack.svc:8200`
+- HTTP: `http://apm-server-apm-http.elastic-stack.svc:8200/v1/traces` (and `/v1/metrics`, `/v1/logs`)
+
+Install it with:
+
+```bash
+make apm-server
 ```
 
 **StarRocks:**
@@ -262,10 +308,19 @@ Login with any username/password (dummy auth).
 To remove everything (apps, infra, and namespaces):
 
 ```bash
-make uninstall
+make uninstall-workspace
+make uninstall-data-platform
+make uninstall-devops
+make uninstall-infra
 ```
 
-This target ensures a clean slate by removing namespaces (`argo`, `argocd`, `envoy-gateway-system`, etc.) to prevent issues with lingering resources.
+These targets ensure a clean slate by removing namespaces (`argo`, `argocd`, `envoy-gateway-system`, etc.) to prevent issues with lingering resources.
+
+If you only installed base infrastructure, you can remove it with:
+
+```bash
+make uninstall-infra
+```
 
 ## Troubleshooting
 
@@ -273,3 +328,13 @@ This target ensures a clean slate by removing namespaces (`argo`, `argocd`, `env
 - **Gateway Not Ready**: Ensure `cert-manager` is fully installed before installing `gateway`. The `make gateway` target includes a wait check for the cert-manager webhook.
 - **Port Conflicts**: Ensure no other gateways (e.g., from other namespaces) are claiming port 443 on the same node IP.
 - **Browser Warnings**: This is expected with a self-signed local CA. Follow the "TLS" section above to trust the CA.
+
+## Makefile Notes
+
+Some install targets (notably `infra`) include guards to skip re-install work if the component is already present.
+Use `FORCE=1` to explicitly re-apply or upgrade:
+
+```bash
+make infra FORCE=1
+make observability FORCE=1
+```

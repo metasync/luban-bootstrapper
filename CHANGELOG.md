@@ -3,6 +3,41 @@
 ## [Unreleased]
 
 
+## [v0.6.11] - 2026-04-23
+
+### Added
+- **Makefiles:**
+    - Added `make infra` for installing base cluster infrastructure (cert-manager, Kubernetes Replicator, Envoy Gateway, Gateway).
+    - Added grouped install targets: `make workspace` (JupyterHub) and `make data-platform` (MinIO, StarRocks).
+    - Added grouped install targets: `make observability` (Elastic Stack) and `make apm-server`.
+- **Observability:**
+    - Added Elastic Stack (Elasticsearch + Kibana) installation via ECK Operator.
+    - Added APM Server installation via ECK Operator.
+    - Added targets to fetch Elastic credentials: `make -C elastic-stack get-elastic-password` and `make -C elastic-stack get-apm-secret-token`.
+
+### Changed
+- **Makefiles:**
+    - Renamed the root CI/CD install entrypoint from `make all` to `make devops`.
+    - Updated `devops`, `workspace`, `data-platform`, and `observability` to depend on `infra`.
+    - Updated `uninstall-devops` to uninstall only CI/CD components and keep `infra`.
+    - Added guards to skip re-installing `infra` components unless `FORCE=1`.
+
+### Fixed
+- **Observability:**
+    - Fixed readiness waits for ECK resources and ensured the Kibana HTTPRoute is applied even when the stack already exists.
+- **Makefiles:**
+    - Fixed guard behavior so “already installed” actually skips the remaining install steps.
+
+### Removed
+- **Makefiles:**
+    - Removed legacy `make all`.
+    - Removed aggregate `make uninstall`; use `uninstall-devops`, `uninstall-workspace`, `uninstall-data-platform`, `uninstall-observability`, and `uninstall-infra`.
+    - Removed typo alias `uninstall-devlops`.
+
+### Documentation
+- Updated README and component docs to use `infra` / `devops` / `workspace` / `data-platform` / `observability` targets.
+
+
 ## [v0.6.10] - 2026-03-31
 
 ### Changed
@@ -80,7 +115,7 @@
 ### Added
 - **Kubernetes Replicator:**
     - Added Kubernetes Replicator installation (Chart v2.12.3) via `make kubernetes-replicator`.
-    - Replaced `reflector` with `kubernetes-replicator` in the `make all` target.
+    - Replaced `reflector` with `kubernetes-replicator` in the `make devops` target.
     - Added `uninstall-kubernetes-replicator` target.
 - **Argo CD:**
     - Added `make change-password` target to interactively update the admin password.
@@ -104,7 +139,7 @@
 
 - **Reflector:**
     - Added Reflector installation (Chart v10.0.16) via `make reflector`.
-    - Included `reflector` in the `make all` target.
+    - Included `reflector` in the `make devops` target.
     - Added `uninstall-reflector` target.
 
 ## [v0.6.5] - 2026-03-08

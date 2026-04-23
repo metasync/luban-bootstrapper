@@ -1,0 +1,26 @@
+apiVersion: apm.k8s.elastic.co/v1
+kind: ApmServer
+metadata:
+  name: ${APM_SERVER_NAME}
+  namespace: ${ELASTIC_STACK_NAMESPACE}
+spec:
+  version: ${ELASTIC_STACK_VERSION}
+  count: 1
+  elasticsearchRef:
+    name: ${ELASTICSEARCH_NAME}
+  kibanaRef:
+    name: ${KIBANA_NAME}
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  podTemplate:
+    spec:
+      containers:
+      - name: apm-server
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 512Mi

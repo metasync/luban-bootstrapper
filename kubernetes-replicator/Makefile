@@ -3,15 +3,19 @@ include ../Makefile.env
 .PHONY: install uninstall
 
 install:
-	@echo "Adding Mittwald Helm repository..."
-	@helm repo add mittwald https://helm.mittwald.de
-	@helm repo update mittwald
-	@echo "Installing Kubernetes Replicator (Chart v$(KUBERNETES_REPLICATOR_CHART_VERSION))..."
-	@helm upgrade --install kubernetes-replicator mittwald/kubernetes-replicator \
-		--namespace $(KUBERNETES_REPLICATOR_NAMESPACE) \
-		--create-namespace \
-		--version $(KUBERNETES_REPLICATOR_CHART_VERSION) \
-		--wait
+	@if [ "$(FORCE)" != "1" ] && helm status kubernetes-replicator -n $(KUBERNETES_REPLICATOR_NAMESPACE) >/dev/null 2>&1; then \
+		echo "kubernetes-replicator already installed (set FORCE=1 to upgrade)"; \
+	else \
+		echo "Adding Mittwald Helm repository..."; \
+		helm repo add mittwald https://helm.mittwald.de; \
+		helm repo update mittwald; \
+		echo "Installing Kubernetes Replicator (Chart v$(KUBERNETES_REPLICATOR_CHART_VERSION))..."; \
+		helm upgrade --install kubernetes-replicator mittwald/kubernetes-replicator \
+			--namespace $(KUBERNETES_REPLICATOR_NAMESPACE) \
+			--create-namespace \
+			--version $(KUBERNETES_REPLICATOR_CHART_VERSION) \
+			--wait; \
+	fi
 
 uninstall:
 	@echo "Uninstalling Kubernetes Replicator..."

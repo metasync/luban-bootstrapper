@@ -232,6 +232,11 @@ The APM Server endpoint is available inside the cluster at:
 
 - `http://apm-server-apm-http.elastic-stack.svc:8200`
 
+APM Server URLs (via Gateway):
+
+- Local: `https://apm.<K8S_DOMAIN>`
+- Public: `https://apm.<LUBAN_PUBLIC_DOMAIN>`
+
 To get the APM secret token:
 
 ```bash

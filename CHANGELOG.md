@@ -3,6 +3,14 @@
 ## [Unreleased]
 
 
+## [v0.6.12] - 2026-05-06
+
+### Added
+- **Observability:**
+    - Exposed APM Server via Gateway on both local and public hostnames.
+    - Documented APM Server local/public URLs.
+
+
 ## [v0.6.11] - 2026-04-23
 
 ### Added

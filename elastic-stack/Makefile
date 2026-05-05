@@ -71,7 +71,10 @@ install-stack:
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
 		KIBANA_HOST=$(KIBANA_HOST) \
 		KIBANA_PUBLIC_HOST=$(KIBANA_PUBLIC_HOST) \
-		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http && \
+		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http \
+		APM_HOST=$(APM_HOST) \
+		APM_PUBLIC_HOST=$(APM_PUBLIC_HOST) \
+		APM_SERVICE_NAME=$(APM_SERVER_NAME)-apm-http && \
 		envsubst < gateway.yaml | $(KUBECTL) apply -f -
 
 get-elastic-password:
@@ -88,7 +91,10 @@ uninstall-stack:
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
 		KIBANA_HOST=$(KIBANA_HOST) \
 		KIBANA_PUBLIC_HOST=$(KIBANA_PUBLIC_HOST) \
-		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http && \
+		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http \
+		APM_HOST=$(APM_HOST) \
+		APM_PUBLIC_HOST=$(APM_PUBLIC_HOST) \
+		APM_SERVICE_NAME=$(APM_SERVER_NAME)-apm-http && \
 		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Deleting Kibana and Elasticsearch resources..."
 	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) delete kibana $(KIBANA_NAME) --ignore-not-found=true || true

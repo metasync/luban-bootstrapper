@@ -32,7 +32,7 @@ install:
 
 get-password:
 	@echo "Retrieving Harbor admin password..."
-	@$(KUBECTL) -n $(HARBOR_NAMESPACE) get secret harbor-core -o jsonpath='{.data.HARBOR_ADMIN_PASSWORD}' | base64 -D
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) get secret harbor-core -o jsonpath='{.data.HARBOR_ADMIN_PASSWORD}' | $(BASE64_DECODE)
 	@echo ""
 
 uninstall:

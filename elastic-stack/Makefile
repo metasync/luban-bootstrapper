@@ -1,6 +1,6 @@
 include ../Makefile.env
 
-.PHONY: install uninstall install-operator uninstall-operator install-stack uninstall-stack install-apm-server uninstall-apm-server get-elastic-password get-apm-secret-token
+.PHONY: install uninstall install-operator uninstall-operator install-stack uninstall-stack install-fleet-apm uninstall-fleet-apm get-elastic-password
 
 ELASTIC_REPO_URL ?= https://helm.elastic.co
 ECK_OPERATOR_RELEASE_NAME ?= elastic-operator
@@ -10,24 +10,61 @@ KIBANA_NAME ?= kibana
 
 install: install-operator install-stack
 
-install-apm-server:
-	@if [ "$(FORCE)" != "1" ] && $(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get apmserver/$(APM_SERVER_NAME) >/dev/null 2>&1; then \
-		echo "apm-server already installed (set FORCE=1 to re-apply)"; \
+install-fleet-apm: install
+	@$(KUBECTL) create namespace $(ELASTIC_STACK_NAMESPACE) --dry-run=client -o yaml | $(KUBECTL) apply -f -
+	@echo "Ensuring Kibana encryption keys secret exists..."
+	@if ! $(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get secret $(KIBANA_ENCRYPTION_SECRET_NAME) >/dev/null 2>&1; then \
+		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) create secret generic $(KIBANA_ENCRYPTION_SECRET_NAME) \
+			--from-literal=encryptedSavedObjectsKey=$$(openssl rand -hex 32) \
+			--from-literal=securityKey=$$(openssl rand -hex 32) \
+			--from-literal=reportingKey=$$(openssl rand -hex 32) \
+			--dry-run=client -o yaml | $(KUBECTL) apply -f -; \
+	fi
+	@if [ "$(FORCE)" != "1" ] && $(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get agent/$(FLEET_SERVER_NAME) >/dev/null 2>&1; then \
+		echo "fleet-apm already installed (set FORCE=1 to re-apply)"; \
 	else \
-		echo "Applying APM Server manifest..."; \
+		echo "Applying Kibana Fleet configuration..."; \
 		export ELASTIC_STACK_VERSION=$(ELASTIC_STACK_VERSION) \
 			ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
 			ELASTICSEARCH_NAME=$(ELASTICSEARCH_NAME) \
 			KIBANA_NAME=$(KIBANA_NAME) \
-			APM_SERVER_NAME=$(APM_SERVER_NAME) && \
-			envsubst < apm-server.yaml | $(KUBECTL) apply -f -; \
-		echo "Waiting for APM Server to be ready..."; \
-		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) wait --for=jsonpath='{.status.health}'=green apmserver/$(APM_SERVER_NAME) --timeout=10m; \
+			KIBANA_PUBLIC_BASE_URL=$(KIBANA_PUBLIC_BASE_URL) \
+			FLEET_SERVER_NAME=$(FLEET_SERVER_NAME) \
+			FLEET_SERVER_POLICY_ID=$(FLEET_SERVER_POLICY_ID) \
+			ELASTIC_AGENT_POLICY_ID=$(ELASTIC_AGENT_POLICY_ID) \
+			FLEET_DATA_NAMESPACE=$(FLEET_DATA_NAMESPACE) \
+			KIBANA_ENCRYPTION_SECRET_NAME=$(KIBANA_ENCRYPTION_SECRET_NAME) && \
+			envsubst '$$ELASTIC_STACK_VERSION $$ELASTIC_STACK_NAMESPACE $$ELASTICSEARCH_NAME $$KIBANA_NAME $$KIBANA_PUBLIC_BASE_URL $$FLEET_SERVER_NAME $$FLEET_SERVER_POLICY_ID $$ELASTIC_AGENT_POLICY_ID $$FLEET_DATA_NAMESPACE $$KIBANA_ENCRYPTION_SECRET_NAME' < kibana-fleet.yaml | $(KUBECTL) apply -f -; \
+		echo "Waiting for Kibana to be ready..."; \
+		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) wait --for=jsonpath='{.status.health}'=green kibana/$(KIBANA_NAME) --timeout=10m; \
+		echo "Applying Fleet Server + APM integration (Elastic Agent)..."; \
+		export ELASTIC_STACK_VERSION=$(ELASTIC_STACK_VERSION) \
+			ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
+			ELASTICSEARCH_NAME=$(ELASTICSEARCH_NAME) \
+			KIBANA_NAME=$(KIBANA_NAME) \
+			FLEET_SERVER_NAME=$(FLEET_SERVER_NAME) \
+			ELASTIC_AGENT_NAME=$(ELASTIC_AGENT_NAME) \
+			FLEET_SERVER_POLICY_ID=$(FLEET_SERVER_POLICY_ID) \
+			ELASTIC_AGENT_POLICY_ID=$(ELASTIC_AGENT_POLICY_ID) \
+			APM_FLEET_SERVICE_NAME=$(APM_FLEET_SERVICE_NAME) && \
+			envsubst '$$ELASTIC_STACK_VERSION $$ELASTIC_STACK_NAMESPACE $$ELASTICSEARCH_NAME $$KIBANA_NAME $$FLEET_SERVER_NAME $$ELASTIC_AGENT_NAME $$FLEET_SERVER_POLICY_ID $$ELASTIC_AGENT_POLICY_ID $$APM_FLEET_SERVICE_NAME' < fleet-apm.yaml | $(KUBECTL) apply -f -; \
+		echo "Waiting for Fleet Server and Elastic Agent to be ready..."; \
+		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) wait --for=jsonpath='{.status.health}'=green agent/$(FLEET_SERVER_NAME) --timeout=10m; \
+		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) wait --for=jsonpath='{.status.health}'=green agent/$(ELASTIC_AGENT_NAME) --timeout=10m; \
 	fi
-
-uninstall-apm-server:
-	@echo "Deleting APM Server resource..."
-	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) delete apmserver $(APM_SERVER_NAME) --ignore-not-found=true || true
+	@echo "Applying Gateway configuration for Kibana + Fleet-managed APM..."
+	@export ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		KIBANA_HOST=$(KIBANA_HOST) \
+		KIBANA_PUBLIC_HOST=$(KIBANA_PUBLIC_HOST) \
+		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http && \
+		envsubst '$$ELASTIC_STACK_NAMESPACE $$GATEWAY_NAMESPACE $$KIBANA_HOST $$KIBANA_PUBLIC_HOST $$KIBANA_SERVICE_NAME' < gateway-kibana.yaml | $(KUBECTL) apply -f -
+	@export ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		APM_HOST=$(APM_HOST) \
+		APM_PUBLIC_HOST=$(APM_PUBLIC_HOST) \
+		APM_SERVICE_NAME=$(APM_FLEET_SERVICE_NAME) && \
+		envsubst '$$ELASTIC_STACK_NAMESPACE $$GATEWAY_NAMESPACE $$APM_HOST $$APM_PUBLIC_HOST $$APM_SERVICE_NAME' < gateway-apm.yaml | $(KUBECTL) apply -f -
 
 install-operator:
 	@if [ "$(FORCE)" != "1" ] && helm status $(ECK_OPERATOR_RELEASE_NAME) -n $(ELASTIC_SYSTEM_NAMESPACE) >/dev/null 2>&1; then \
@@ -51,17 +88,27 @@ install-stack:
 		echo "elastic-stack already installed (set FORCE=1 to re-apply resources)"; \
 	else \
 		$(KUBECTL) create namespace $(ELASTIC_STACK_NAMESPACE) --dry-run=client -o yaml | $(KUBECTL) apply -f -; \
+		echo "Ensuring Kibana encryption keys secret exists..."; \
+		if ! $(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get secret $(KIBANA_ENCRYPTION_SECRET_NAME) >/dev/null 2>&1; then \
+			$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) create secret generic $(KIBANA_ENCRYPTION_SECRET_NAME) \
+				--from-literal=encryptedSavedObjectsKey=$$(openssl rand -hex 32) \
+				--from-literal=securityKey=$$(openssl rand -hex 32) \
+				--from-literal=reportingKey=$$(openssl rand -hex 32) \
+				--dry-run=client -o yaml | $(KUBECTL) apply -f -; \
+		fi; \
 		echo "Applying Elasticsearch and Kibana manifests..."; \
 		export ELASTIC_STACK_VERSION=$(ELASTIC_STACK_VERSION) \
 			ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
 			ELASTICSEARCH_NAME=$(ELASTICSEARCH_NAME) \
 			KIBANA_NAME=$(KIBANA_NAME) && \
-			envsubst < elasticsearch.yaml | $(KUBECTL) apply -f -; \
+			envsubst '$$ELASTIC_STACK_VERSION $$ELASTIC_STACK_NAMESPACE $$ELASTICSEARCH_NAME' < elasticsearch.yaml | $(KUBECTL) apply -f -; \
 		export ELASTIC_STACK_VERSION=$(ELASTIC_STACK_VERSION) \
 			ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
 			ELASTICSEARCH_NAME=$(ELASTICSEARCH_NAME) \
-			KIBANA_NAME=$(KIBANA_NAME) && \
-			envsubst < kibana.yaml | $(KUBECTL) apply -f -; \
+			KIBANA_NAME=$(KIBANA_NAME) \
+			KIBANA_PUBLIC_BASE_URL=$(KIBANA_PUBLIC_BASE_URL) \
+			KIBANA_ENCRYPTION_SECRET_NAME=$(KIBANA_ENCRYPTION_SECRET_NAME) && \
+			envsubst '$$ELASTIC_STACK_VERSION $$ELASTIC_STACK_NAMESPACE $$ELASTICSEARCH_NAME $$KIBANA_NAME $$KIBANA_PUBLIC_BASE_URL $$KIBANA_ENCRYPTION_SECRET_NAME' < kibana.yaml | $(KUBECTL) apply -f -; \
 		echo "Waiting for Elasticsearch and Kibana to be ready..."; \
 		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) wait --for=jsonpath='{.status.phase}'=Ready elasticsearch/$(ELASTICSEARCH_NAME) --timeout=10m; \
 		$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) wait --for=jsonpath='{.status.health}'=green kibana/$(KIBANA_NAME) --timeout=10m; \
@@ -71,31 +118,37 @@ install-stack:
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
 		KIBANA_HOST=$(KIBANA_HOST) \
 		KIBANA_PUBLIC_HOST=$(KIBANA_PUBLIC_HOST) \
-		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http \
-		APM_HOST=$(APM_HOST) \
-		APM_PUBLIC_HOST=$(APM_PUBLIC_HOST) \
-		APM_SERVICE_NAME=$(APM_SERVER_NAME)-apm-http && \
-		envsubst < gateway.yaml | $(KUBECTL) apply -f -
+		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http && \
+		envsubst '$$ELASTIC_STACK_NAMESPACE $$GATEWAY_NAMESPACE $$KIBANA_HOST $$KIBANA_PUBLIC_HOST $$KIBANA_SERVICE_NAME' < gateway-kibana.yaml | $(KUBECTL) apply -f -
+
+uninstall-fleet-apm:
+	@echo "Deleting Fleet Server + Elastic Agent resources..."
+	@export ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
+		FLEET_SERVER_NAME=$(FLEET_SERVER_NAME) \
+		ELASTIC_AGENT_NAME=$(ELASTIC_AGENT_NAME) \
+		APM_FLEET_SERVICE_NAME=$(APM_FLEET_SERVICE_NAME) && \
+		envsubst '$$ELASTIC_STACK_NAMESPACE $$FLEET_SERVER_NAME $$ELASTIC_AGENT_NAME $$APM_FLEET_SERVICE_NAME' < fleet-apm.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 
 get-elastic-password:
-	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get secret $(ELASTICSEARCH_NAME)-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -D
-
-get-apm-secret-token:
-	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get secret $(APM_SERVER_NAME)-apm-token -o jsonpath='{.data.secret-token}' | base64 -D
+	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) get secret $(ELASTICSEARCH_NAME)-es-elastic-user -o jsonpath='{.data.elastic}' | $(BASE64_DECODE)
 
 uninstall: uninstall-stack uninstall-operator
 
 uninstall-stack:
-	@echo "Uninstalling Gateway configuration for Kibana..."
+	@$(MAKE) uninstall-fleet-apm
+	@echo "Uninstalling Gateway configuration for Kibana + APM..."
+	@export ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
+		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
+		APM_HOST=$(APM_HOST) \
+		APM_PUBLIC_HOST=$(APM_PUBLIC_HOST) \
+		APM_SERVICE_NAME=$(APM_FLEET_SERVICE_NAME) && \
+		envsubst '$$ELASTIC_STACK_NAMESPACE $$GATEWAY_NAMESPACE $$APM_HOST $$APM_PUBLIC_HOST $$APM_SERVICE_NAME' < gateway-apm.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@export ELASTIC_STACK_NAMESPACE=$(ELASTIC_STACK_NAMESPACE) \
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \
 		KIBANA_HOST=$(KIBANA_HOST) \
 		KIBANA_PUBLIC_HOST=$(KIBANA_PUBLIC_HOST) \
-		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http \
-		APM_HOST=$(APM_HOST) \
-		APM_PUBLIC_HOST=$(APM_PUBLIC_HOST) \
-		APM_SERVICE_NAME=$(APM_SERVER_NAME)-apm-http && \
-		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
+		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http && \
+		envsubst '$$ELASTIC_STACK_NAMESPACE $$GATEWAY_NAMESPACE $$KIBANA_HOST $$KIBANA_PUBLIC_HOST $$KIBANA_SERVICE_NAME' < gateway-kibana.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Deleting Kibana and Elasticsearch resources..."
 	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) delete kibana $(KIBANA_NAME) --ignore-not-found=true || true
 	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) delete elasticsearch $(ELASTICSEARCH_NAME) --ignore-not-found=true || true

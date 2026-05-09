@@ -43,7 +43,7 @@ install:
 
 get-token:
 	@echo "Retrieving token from secret argo-workflows-token..."
-	@$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get secret argo-workflows-token -o jsonpath='{.data.token}' | base64 -D
+	@$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get secret argo-workflows-token -o jsonpath='{.data.token}' | $(BASE64_DECODE)
 	@echo ""
 
 uninstall:

@@ -8,6 +8,11 @@ spec:
   count: 1
   elasticsearchRef:
     name: ${ELASTICSEARCH_NAME}
+  config:
+    server.publicBaseUrl: ${KIBANA_PUBLIC_BASE_URL}
+    xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_ENCRYPTED_SAVED_OBJECTS_KEY}
+    xpack.security.encryptionKey: ${KIBANA_SECURITY_ENCRYPTION_KEY}
+    xpack.reporting.encryptionKey: ${KIBANA_REPORTING_ENCRYPTION_KEY}
   http:
     tls:
       selfSignedCertificate:
@@ -16,6 +21,22 @@ spec:
     spec:
       containers:
       - name: kibana
+        env:
+        - name: KIBANA_ENCRYPTED_SAVED_OBJECTS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${KIBANA_ENCRYPTION_SECRET_NAME}
+              key: encryptedSavedObjectsKey
+        - name: KIBANA_SECURITY_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${KIBANA_ENCRYPTION_SECRET_NAME}
+              key: securityKey
+        - name: KIBANA_REPORTING_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${KIBANA_ENCRYPTION_SECRET_NAME}
+              key: reportingKey
         resources:
           requests:
             cpu: 200m

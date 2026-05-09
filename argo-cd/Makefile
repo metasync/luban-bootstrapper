@@ -32,7 +32,7 @@ install:
 
 get-init-secret:
 	@echo "Retrieving initial admin password from secret argocd-initial-admin-secret..."
-	@$(KUBECTL) -n $(ARGO_CD_NAMESPACE) get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -D
+	@$(KUBECTL) -n $(ARGO_CD_NAMESPACE) get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | $(BASE64_DECODE)
 	@echo ""
 
 change-password:

@@ -1,0 +1,95 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: ${KIBANA_NAME}
+  namespace: ${ELASTIC_STACK_NAMESPACE}
+spec:
+  version: ${ELASTIC_STACK_VERSION}
+  count: 1
+  elasticsearchRef:
+    name: ${ELASTICSEARCH_NAME}
+  config:
+    server.publicBaseUrl: ${KIBANA_PUBLIC_BASE_URL}
+    xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_ENCRYPTED_SAVED_OBJECTS_KEY}
+    xpack.security.encryptionKey: ${KIBANA_SECURITY_ENCRYPTION_KEY}
+    xpack.reporting.encryptionKey: ${KIBANA_REPORTING_ENCRYPTION_KEY}
+    xpack.fleet.agents.elasticsearch.hosts:
+    - https://${ELASTICSEARCH_NAME}-es-http.${ELASTIC_STACK_NAMESPACE}.svc:9200
+    xpack.fleet.agents.fleet_server.hosts:
+    - http://${FLEET_SERVER_NAME}-agent-http.${ELASTIC_STACK_NAMESPACE}.svc:8220
+    xpack.fleet.packages:
+    - name: system
+      version: latest
+    - name: elastic_agent
+      version: latest
+    - name: fleet_server
+      version: latest
+    - name: apm
+      version: latest
+    xpack.fleet.agentPolicies:
+    - name: Fleet Server on ECK policy
+      id: ${FLEET_SERVER_POLICY_ID}
+      namespace: ${FLEET_DATA_NAMESPACE}
+      is_managed: true
+      monitoring_enabled:
+      - logs
+      - metrics
+      unenroll_timeout: 900
+      package_policies:
+      - name: fleet_server-1
+        id: fleet_server-1
+        package:
+          name: fleet_server
+    - name: Elastic Agent on ECK policy
+      id: ${ELASTIC_AGENT_POLICY_ID}
+      namespace: ${FLEET_DATA_NAMESPACE}
+      is_managed: true
+      monitoring_enabled:
+      - logs
+      - metrics
+      unenroll_timeout: 900
+      package_policies:
+      - name: system-1
+        id: system-1
+        package:
+          name: system
+      - name: apm-1
+        id: apm-1
+        package:
+          name: apm
+        inputs:
+        - type: apm
+          enabled: true
+          vars:
+          - name: host
+            value: 0.0.0.0:8200
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  podTemplate:
+    spec:
+      containers:
+      - name: kibana
+        env:
+        - name: KIBANA_ENCRYPTED_SAVED_OBJECTS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${KIBANA_ENCRYPTION_SECRET_NAME}
+              key: encryptedSavedObjectsKey
+        - name: KIBANA_SECURITY_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${KIBANA_ENCRYPTION_SECRET_NAME}
+              key: securityKey
+        - name: KIBANA_REPORTING_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${KIBANA_ENCRYPTION_SECRET_NAME}
+              key: reportingKey
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            memory: 1Gi

@@ -4,7 +4,7 @@ include ../Makefile.env
 # This Makefile manages the core Gateway API resources, including the GatewayClass,
 # Gateway, and a local Certificate Authority (CA) for issuing TLS certificates.
 
-.PHONY: install uninstall create-secret
+.PHONY: install uninstall create-secret get-local-ca-crt
 
 create-secret:
 	@if [ -f ../secrets/cloudflare.env ]; then \
@@ -70,3 +70,6 @@ uninstall:
 	-@$(KUBECTL) delete secret cloudflare-api-token-secret -n $(GATEWAY_NAMESPACE) || true
 	@echo "Deleting namespace $(GATEWAY_NAMESPACE)..."
 	@$(KUBECTL) delete namespace $(GATEWAY_NAMESPACE) --ignore-not-found=true || true
+
+get-local-ca-crt:
+	@$(KUBECTL) get secret local-ca-root -n $(GATEWAY_NAMESPACE) -o jsonpath='{.data.ca\.crt}' | $(BASE64_DECODE)

@@ -20,7 +20,7 @@ The stack includes:
 
 ## Prerequisites
 
-- **macOS** (Optimized for `base64 -D` and OrbStack domains)
+- **macOS** (Optimized for OrbStack domains)
 - **Kubernetes Cluster** (Tested with [OrbStack](https://orbstack.dev/))
 - **Internet Access** (To pull Helm charts and container images)
 - `envsubst` (used to render Gateway/HTTPRoute templates; comes with `gettext`)
@@ -162,6 +162,18 @@ make data-platform
 make observability
 ```
 
+Elastic Stack installs Fleet-managed APM by default:
+
+```bash
+make elastic-stack
+```
+
+If you only want Elasticsearch + Kibana:
+
+```bash
+make elastic-stack-core
+```
+
 Or install them individually:
 
 ```bash
@@ -220,38 +232,41 @@ make -C harbor get-password
 
 **Kibana (Elastic Stack via ECK):**
 
+Kibana is configured with `server.publicBaseUrl` (via `KIBANA_PUBLIC_BASE_URL`) so it can generate correct absolute URLs when running behind the Gateway.
+
+- Default: `KIBANA_PUBLIC_BASE_URL=https://kibana.<K8S_DOMAIN>`
+- If you mainly use the public domain, set: `KIBANA_PUBLIC_BASE_URL=https://kibana.<LUBAN_PUBLIC_DOMAIN>`
+
 Username is `elastic`. To get the password:
 
 ```bash
 make -C elastic-stack get-elastic-password
 ```
 
-**APM Server (Elastic Stack via ECK):**
+**APM (Fleet-managed, via Fleet Server):**
 
-The APM Server endpoint is available inside the cluster at:
+`make observability` installs APM in Fleet-managed mode by default.
 
-- `http://apm-server-apm-http.elastic-stack.svc:8200`
+APM endpoint inside the cluster:
 
-APM Server URLs (via Gateway):
+- `http://apm.elastic-stack.svc:8200`
+
+Note: This in-cluster endpoint is plain HTTP (TLS is terminated at the Gateway for external access).
+
+APM URLs (via Gateway):
 
 - Local: `https://apm.<K8S_DOMAIN>`
 - Public: `https://apm.<LUBAN_PUBLIC_DOMAIN>`
 
-To get the APM secret token:
+To get authentication credentials for APM agents:
 
-```bash
-make -C elastic-stack get-apm-secret-token
-```
-
-OTLP endpoints:
-
-- gRPC: `http://apm-server-apm-http.elastic-stack.svc:8200`
-- HTTP: `http://apm-server-apm-http.elastic-stack.svc:8200/v1/traces` (and `/v1/metrics`, `/v1/logs`)
+- Kibana → Fleet → Agent policies → `eck-agent` → APM integration
+  - Use a **Secret token** or **API key** (recommended) from the integration settings.
 
 Install it with:
 
 ```bash
-make apm-server
+make elastic-stack
 ```
 
 **StarRocks:**
@@ -277,7 +292,7 @@ Example JDBC URLs:
   - **Local**: A local CA is generated in the `gateway` namespace.
     - To trust the CA, extract the certificate:
       ```bash
-      kubectl get secret local-ca-root -n gateway -o jsonpath='{.data.ca\.crt}' | base64 -D > local-ca.crt
+      make -C gateway get-local-ca-crt > local-ca.crt
       ```
     - Import `local-ca.crt` into your Keychain / Browser trust store.
   - **Public**: Let's Encrypt (Staging/Prod) via DNS-01 challenge (Cloudflare).

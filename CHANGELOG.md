@@ -3,6 +3,23 @@
 ## [Unreleased]
 
 
+## [v0.6.13] - 2026-05-09
+
+### Added
+- **Observability:** Elastic Stack now includes Fleet Server + Fleet-managed APM by default.
+- **Gateway:** Added `make -C gateway get-local-ca-crt` for extracting the local CA.
+- **Makefiles:** Added portable `BASE64_DECODE` helper for secret decoding.
+
+### Changed
+- **Observability:** `make observability` now installs Fleet-managed APM by default.
+- **Observability:** `make elastic-stack` now installs Fleet-managed APM by default; use `make elastic-stack-core` for Elasticsearch + Kibana only.
+- **Observability:** Split Gateway routes into dedicated Kibana and APM `HTTPRoute` manifests.
+- **Kibana:** Added `KIBANA_PUBLIC_BASE_URL` and configured `server.publicBaseUrl`.
+
+### Removed
+- **Observability:** Removed legacy `make apm-server` flow and `get-apm-secret-token`.
+
+
 ## [v0.6.12] - 2026-05-06
 
 ### Added

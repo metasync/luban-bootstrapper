@@ -13,11 +13,11 @@ RESET := \033[0m
 
 .PHONY: help infra devops workspace data-platform observability \
 	cert-manager kubernetes-replicator envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks elastic-stack apm-server \
+	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks elastic-stack elastic-stack-core \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall-infra uninstall-devops uninstall-workspace uninstall-data-platform uninstall-observability \
 	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks uninstall-elastic-stack uninstall-apm-server
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks uninstall-elastic-stack
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -26,7 +26,8 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make workspace" "Install workspace stack (JupyterHub)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make data-platform" "Install data platform stack (MinIO, StarRocks)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make observability" "Install observability stack (Elastic Stack)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make apm-server" "Install APM Server (ECK)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make elastic-stack" "Install Elastic Stack + Fleet-managed APM"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make elastic-stack-core" "Install Elasticsearch + Kibana only"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cert-manager" "Install cert-manager (Chart $(CERT_MANAGER_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubernetes-replicator" "Install Kubernetes Replicator (Chart $(KUBERNETES_REPLICATOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make envoy-gateway" "Install Envoy Gateway (Chart $(ENVOY_GATEWAY_CHART_VERSION))"
@@ -51,7 +52,6 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-workspace" "Uninstall workspace stack (JupyterHub)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-data-platform" "Uninstall data platform stack (StarRocks, MinIO)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-observability" "Uninstall observability stack (keeps infra)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-apm-server" "Uninstall APM Server"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-gateway" "Uninstall Gateway API config and local CA issuer"
@@ -115,7 +115,7 @@ workspace: infra jupyterhub
 
 data-platform: infra minio starrocks
 
-observability: infra elastic-stack apm-server
+observability: infra elastic-stack
 
 cert-manager:
 	@echo "=== Installing cert-manager ==="
@@ -168,13 +168,14 @@ starrocks:
 	@echo "=== Installing StarRocks Operator ==="
 	@$(MAKE) -C starrocks install
 
-elastic-stack:
-	@echo "=== Installing Elastic Stack ==="
+elastic-stack: infra
+	@echo "=== Installing Elastic Stack (Fleet-managed APM) ==="
+	@$(MAKE) -C elastic-stack install-fleet-apm
+
+elastic-stack-core: infra
+	@echo "=== Installing Elastic Stack (Elasticsearch + Kibana) ==="
 	@$(MAKE) -C elastic-stack install
 
-apm-server: elastic-stack
-	@echo "=== Installing APM Server ==="
-	@$(MAKE) -C elastic-stack install-apm-server
 
 cli:
 	@echo "=== Installing all CLIs ==="
@@ -215,11 +216,7 @@ uninstall-workspace: uninstall-jupyterhub
 
 uninstall-data-platform: uninstall-starrocks uninstall-minio
 
-uninstall-observability: uninstall-apm-server uninstall-elastic-stack
-
-uninstall-apm-server:
-	@echo "=== Uninstalling APM Server ==="
-	@$(MAKE) -C elastic-stack uninstall-apm-server
+uninstall-observability: uninstall-elastic-stack
 
 uninstall-elastic-stack:
 	@echo "=== Uninstalling Elastic Stack ==="

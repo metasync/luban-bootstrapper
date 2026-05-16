@@ -11,6 +11,7 @@ The stack includes:
   - **Harbor** (Container Registry)
   - **kpack** (Cloud Native Buildpacks for Kubernetes)
   - **Kubernetes Replicator** (Secret/ConfigMap replication)
+  - **metrics-server** (Resource metrics API for `kubectl top`)
   - **Envoy Gateway + Gateway API** (Modern Ingress and Traffic Management)
   - **cert-manager** (TLS certificate management with a local CA)
 
@@ -46,6 +47,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[harbor/](./harbor/)**: Harbor Helm install & Gateway config.
 - **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
 - **[kubernetes-replicator/](./kubernetes-replicator/)**: Kubernetes Replicator Helm install.
+- **[metrics-server/](./metrics-server/)**: metrics-server Helm install (enables `kubectl top`).
 - **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
 - **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
 - **[kpack/](./kpack/)**: kpack raw manifest install.
@@ -71,6 +73,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - StarRocks Operator (App v1.11.4)
   - kpack (v0.17.1)
   - Kubernetes Replicator (v2.12.3)
+  - metrics-server (Chart 3.13.0 -> App 0.8.0)
   - Envoy Gateway (v1.7.1)
   - cert-manager (v1.20.1)
 - **CLI Versions**:
@@ -148,11 +151,17 @@ To install base infrastructure plus all default CI/CD components:
 make devops
 ```
 
-If you only want the base cluster infrastructure (Gateway + cert-manager):
+If you only want the base cluster infrastructure:
 
 ```bash
 make infra
 ```
+
+`make infra` installs:
+- cert-manager
+- Kubernetes Replicator
+- metrics-server (so `kubectl top` works)
+- Envoy Gateway + Gateway API resources
 
 ### 4. Install optional components
 

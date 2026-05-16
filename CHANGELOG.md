@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [v0.6.14] - 2026-05-16
+
+### Added
+- **Infra:** Added metrics-server installation via `make metrics-server` and included it in `make infra`.
+- **Infra:** Added tuning values for ECK operator resources to reduce local overcommit risk.
+
+### Changed
+- **Infra:** Reduced Envoy Gateway resource requests/limits.
+- **Infra:** Added resource caps for cert-manager and Kubernetes Replicator installs.
+- **Data platform:** Reduced MinIO requests/limits and reduced StarRocks FE/CN requests/limits.
+- **Workspace:** Reduced JupyterHub singleuser default resources and added resource caps for core components.
+- **Observability:** Reduced Kibana resources and bounded Node heap; reduced Elasticsearch CPU and memory (ECK-compliant); set Elastic Agent/Fleet Server resources.
+- **Devops:** Reduced kpack controller requests via JSONPatch file.
+
+### Fixed
+- **Infra:** Reduced node total memory limits below 100% by lowering StarRocks limits and ECK operator memory limit.
+
 
 ## [v0.6.13] - 2026-05-09
 

@@ -14,6 +14,7 @@ install:
 			--namespace $(KUBERNETES_REPLICATOR_NAMESPACE) \
 			--create-namespace \
 			--version $(KUBERNETES_REPLICATOR_CHART_VERSION) \
+			--values values.yaml \
 			--wait; \
 	fi
 

@@ -19,6 +19,7 @@ install:
 			--namespace $(CERT_MANAGER_NAMESPACE) \
 			--create-namespace \
 			--version v$(CERT_MANAGER_CHART_VERSION) \
+			--values values.yaml \
 			--set crds.enabled=true \
 			--set extraArgs="{--dns01-recursive-nameservers=8.8.8.8:53,--dns01-recursive-nameservers-only=true}" \
 			--timeout 10m \

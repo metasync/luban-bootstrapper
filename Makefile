@@ -12,16 +12,16 @@ RESET := \033[0m
 # Also provides targets to install necessary CLIs (pack, helm, kubectl).
 
 .PHONY: help infra devops workspace data-platform observability \
-	cert-manager kubernetes-replicator envoy-gateway gateway \
+	cert-manager kubernetes-replicator metrics-server envoy-gateway gateway \
 	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks elastic-stack elastic-stack-core \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall-infra uninstall-devops uninstall-workspace uninstall-data-platform uninstall-observability \
-	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-envoy-gateway uninstall-gateway \
+	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-metrics-server uninstall-envoy-gateway uninstall-gateway \
 	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks uninstall-elastic-stack
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make infra" "Install base cluster infra (cert-manager, gateway)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make infra" "Install base cluster infra (cert-manager, replicator, metrics-server, envoy-gateway, gateway)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make devops" "Install core CI/CD and gateway stack"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make workspace" "Install workspace stack (JupyterHub)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make data-platform" "Install data platform stack (MinIO, StarRocks)"
@@ -30,6 +30,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make elastic-stack-core" "Install Elasticsearch + Kibana only"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cert-manager" "Install cert-manager (Chart $(CERT_MANAGER_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubernetes-replicator" "Install Kubernetes Replicator (Chart $(KUBERNETES_REPLICATOR_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make metrics-server" "Install metrics-server (Chart $(METRICS_SERVER_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make envoy-gateway" "Install Envoy Gateway (Chart $(ENVOY_GATEWAY_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make gateway" "Install Gateway API config and local CA issuer"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make argo-workflows" "Install Argo Workflows (Chart $(ARGO_WORKFLOWS_CHART_VERSION)) into namespace $(ARGO_WORKFLOWS_NAMESPACE)"
@@ -53,6 +54,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-data-platform" "Uninstall data platform stack (StarRocks, MinIO)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-observability" "Uninstall observability stack (keeps infra)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-metrics-server" "Uninstall metrics-server"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-gateway" "Uninstall Gateway API config and local CA issuer"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-argo-workflows" "Uninstall Argo Workflows"
@@ -86,10 +88,12 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_NAMESPACE" "Namespace for Envoy Gateway"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_NAMESPACE" "Namespace for cert-manager"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBERNETES_REPLICATOR_NAMESPACE" "Namespace for Kubernetes Replicator"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "METRICS_SERVER_NAMESPACE" "Namespace for metrics-server"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "GATEWAY_NAMESPACE" "Namespace for Gateway resources"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_CHART_VERSION" "Envoy Gateway chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_CHART_VERSION" "cert-manager chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBERNETES_REPLICATOR_CHART_VERSION" "Kubernetes Replicator chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "METRICS_SERVER_CHART_VERSION" "metrics-server chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_CHART_VERSION" "Harbor chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "K8S_DOMAIN" "Base domain for ingress hosts"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_HOST" "Hostname for Argo Workflows UI"
@@ -101,6 +105,7 @@ help:
 
 infra: cert-manager \
 	kubernetes-replicator \
+	metrics-server \
 	envoy-gateway \
 	gateway
 
@@ -124,6 +129,10 @@ cert-manager:
 kubernetes-replicator:
 	@echo "=== Installing Kubernetes Replicator ==="
 	@$(MAKE) -C kubernetes-replicator install
+
+metrics-server:
+	@echo "=== Installing metrics-server ==="
+	@$(MAKE) -C metrics-server install
 
 envoy-gateway:
 	@echo "=== Installing Envoy Gateway ==="
@@ -202,6 +211,7 @@ argo-cli:
 	@$(MAKE) -C cli install-argo-cli
 
 uninstall-infra: uninstall-gateway \
+	uninstall-metrics-server \
 	uninstall-envoy-gateway \
 	uninstall-kubernetes-replicator \
 	uninstall-cert-manager
@@ -245,6 +255,10 @@ uninstall-cert-manager:
 uninstall-kubernetes-replicator:
 	@echo "=== Uninstalling Kubernetes Replicator ==="
 	@$(MAKE) -C kubernetes-replicator uninstall
+
+uninstall-metrics-server:
+	@echo "=== Uninstalling metrics-server ==="
+	@$(MAKE) -C metrics-server uninstall
 
 uninstall-envoy-gateway:
 	@echo "=== Uninstalling Envoy Gateway ==="

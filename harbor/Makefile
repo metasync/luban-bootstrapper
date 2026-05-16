@@ -17,6 +17,7 @@ install:
 		--namespace $(HARBOR_NAMESPACE) \
 		--create-namespace \
 		--version $(HARBOR_CHART_VERSION) \
+		--values values.yaml \
 		--set externalURL=https://$(HARBOR_HOST) \
 		--set expose.type=clusterIP \
 		--set expose.tls.enabled=false \

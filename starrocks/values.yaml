@@ -14,10 +14,10 @@ starrocks:
     resources:
       requests:
         cpu: 500m
-        memory: 1Gi
+        memory: 768Mi
       limits:
         cpu: 1
-        memory: 2Gi
+        memory: 1Gi
     feEnvVars:
       - name: IGNORE_MAX_USER_PROCESSES_CHECK
         value: "true"
@@ -54,10 +54,10 @@ starrocks:
     resources:
       requests:
         cpu: 500m
-        memory: 2Gi
+        memory: 1Gi
       limits:
         cpu: 2
-        memory: 4Gi
+        memory: 1536Mi
     cnEnvVars:
       - name: IGNORE_MAX_USER_PROCESSES_CHECK
         value: "true"

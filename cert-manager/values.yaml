@@ -1,0 +1,32 @@
+extraEnv:
+  - name: GOMEMLIMIT
+    value: 200MiB
+  - name: GOGC
+    value: "60"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+webhook:
+  extraEnv:
+    - name: GOMEMLIMIT
+      value: 200MiB
+    - name: GOGC
+      value: "60"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+cainjector:
+  extraEnv:
+    - name: GOMEMLIMIT
+      value: 200MiB
+    - name: GOGC
+      value: "60"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi

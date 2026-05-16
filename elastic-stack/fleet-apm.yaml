@@ -24,6 +24,15 @@ spec:
         automountServiceAccountToken: true
         securityContext:
           runAsUser: 0
+        containers:
+        - name: agent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 
 ---
 
@@ -48,6 +57,15 @@ spec:
         automountServiceAccountToken: true
         securityContext:
           runAsUser: 0
+        containers:
+        - name: agent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1
+              memory: 768Mi
 
 ---
 

@@ -78,6 +78,7 @@ install-operator:
 			--namespace $(ELASTIC_SYSTEM_NAMESPACE) \
 			--create-namespace \
 			--version $(ECK_OPERATOR_CHART_VERSION) \
+			--values eck-operator-values.yaml \
 			--timeout 10m \
 			--wait; \
 		$(KUBECTL) -n $(ELASTIC_SYSTEM_NAMESPACE) rollout status statefulset/elastic-operator --timeout=600s; \

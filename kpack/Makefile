@@ -30,8 +30,11 @@ install:
 	  echo "kpack apply failed (attempt $$i of $$retries), retrying in 10s..."; \
 	  sleep 10; \
 	done
+	@$(KUBECTL) -n $(KPACK_NAMESPACE) patch deployment kpack-controller --type='json' \
+		--patch-file kpack-controller-resources.jsonpatch.yaml >/dev/null
 	@echo "Waiting for kpack-controller to be ready..."
 	@$(KUBECTL) wait -n $(KPACK_NAMESPACE) deployment/kpack-controller --for=condition=Available --timeout=5m
+	@$(KUBECTL) wait -n $(KPACK_NAMESPACE) deployment/kpack-webhook --for=condition=Available --timeout=5m
 
 uninstall:
 	@echo "Uninstalling kpack..."

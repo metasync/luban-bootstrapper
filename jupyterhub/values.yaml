@@ -8,6 +8,23 @@ hub:
       c.KubeSpawner.environment.update({
           "DAGSTER_WEBSERVER_PATH_PREFIX": dagster_prefix
       })
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+proxy:
+  chp:
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
 
 singleuser:
   image:
@@ -19,11 +36,11 @@ singleuser:
     # Ensures the container runs the modern Jupyter Server to respect our config
     JUPYTERHUB_SINGLEUSER_APP: "jupyter_server.serverapp.ServerApp"
   memory:
-    limit: 4G
-    guarantee: 2G
+    limit: 1G
+    guarantee: 512M
   cpu:
-    limit: 2
-    guarantee: 0.5
+    limit: 1
+    guarantee: 0.2
   extraFiles:
     jupyter_server_config:
       mountPath: /etc/jupyter/jupyter_server_config.py
@@ -50,3 +67,23 @@ singleuser:
             }
           }
         }
+
+scheduling:
+  userScheduler:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+prePuller:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi

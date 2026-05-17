@@ -15,6 +15,7 @@
 - **Workspace:** Reduced JupyterHub singleuser default resources and added resource caps for core components.
 - **Observability:** Reduced Kibana resources and bounded Node heap; reduced Elasticsearch CPU and memory (ECK-compliant); set Elastic Agent/Fleet Server resources.
 - **Devops:** Reduced kpack controller requests via JSONPatch file.
+- **Devops:** Made `GHCR_MIRROR` opt-in (unset by default) and clarified usage notes.
 
 ### Fixed
 - **Infra:** Reduced node total memory limits below 100% by lowering StarRocks limits and ECK operator memory limit.

@@ -14,6 +14,47 @@ metadata:
   name: envoy
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: luban-envoy-proxy
+    namespace: ${GATEWAY_NAMESPACE}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: luban-envoy-proxy
+  namespace: ${GATEWAY_NAMESPACE}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              template:
+                spec:
+                  containers:
+                  - name: envoy
+                    livenessProbe:
+                      timeoutSeconds: 5
+                      periodSeconds: 10
+                      failureThreshold: 6
+                    readinessProbe:
+                      timeoutSeconds: 5
+                      periodSeconds: 10
+                      failureThreshold: 6
+                  - name: shutdown-manager
+                    livenessProbe:
+                      timeoutSeconds: 5
+                      periodSeconds: 10
+                      failureThreshold: 6
+                    readinessProbe:
+                      timeoutSeconds: 5
+                      periodSeconds: 10
+                      failureThreshold: 6
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway

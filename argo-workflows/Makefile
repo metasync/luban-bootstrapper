@@ -6,7 +6,7 @@ include ../Makefile.env
 
 ARGO_REPO_URL ?= https://argoproj.github.io/argo-helm
 
-.PHONY: install uninstall get-token
+.PHONY: install uninstall get-token admin-token
 
 install:
 	@echo "Adding Argo Helm repository..."
@@ -26,6 +26,9 @@ install:
 		--set controller.workflowDefaults.spec.serviceAccountName=workflow-runner \
 		--timeout 10m \
 		--wait
+	@$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) patch deployment argo-workflows-server --type='json' \
+		--patch-file server-probes.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) rollout status deployment/argo-workflows-server --timeout=600s
 	@echo "Applying workflow RBAC (ServiceAccount and RoleBinding)..."
 	@$(KUBECTL) apply -n $(ARGO_WORKFLOWS_NAMESPACE) -f workflow-rbac.yaml
 	@echo "Applying Gateway configuration..."
@@ -45,6 +48,17 @@ get-token:
 	@echo "Retrieving token from secret argo-workflows-token..."
 	@$(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) get secret argo-workflows-token -o jsonpath='{.data.token}' | $(BASE64_DECODE)
 	@echo ""
+
+admin-token:
+	@$(KUBECTL) create serviceaccount argo-workflows-admin \
+		-n $(ARGO_WORKFLOWS_NAMESPACE) \
+		--dry-run=client -o yaml | $(KUBECTL) apply -f - >/dev/null
+	@$(KUBECTL) create clusterrolebinding argo-workflows-admin-cluster-admin \
+		--clusterrole=cluster-admin \
+		--serviceaccount=$(ARGO_WORKFLOWS_NAMESPACE):argo-workflows-admin \
+		--dry-run=client -o yaml | $(KUBECTL) apply -f - >/dev/null
+	@TOKEN=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) create token argo-workflows-admin); \
+		echo "Bearer $$TOKEN"
 
 uninstall:
 	@echo "Uninstalling Gateway configuration..."

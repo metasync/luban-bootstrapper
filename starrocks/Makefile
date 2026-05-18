@@ -21,6 +21,9 @@ install: check-minio
 		--values $$TMP_VALUES \
 		--wait; \
 	rm -f $$TMP_VALUES
+	@$(KUBECTL) -n $(STARROCKS_NAMESPACE) patch deployment kube-starrocks-operator --type='json' \
+		--patch-file operator-probes.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(STARROCKS_NAMESPACE) rollout status deployment/kube-starrocks-operator --timeout=600s
 	@echo "Applying Gateway configuration for StarRocks HTTP..."
 	@export STARROCKS_NAMESPACE=$(STARROCKS_NAMESPACE) \
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \

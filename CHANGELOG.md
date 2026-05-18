@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 
-## [v0.6.14] - 2026-05-16
+## [v0.6.14] - 2026-05-18
 
 ### Added
 - **Infra:** Added metrics-server installation via `make metrics-server` and included it in `make infra`.
 - **Infra:** Added tuning values for ECK operator resources to reduce local overcommit risk.
+- **Docs:** Added a local cluster stability & tuning guide (OrbStack-focused), including probe baseline recommendations and component-specific tuning locations.
+- **Argo Workflows:** Added `make -C argo-workflows admin-token` to create a cluster-admin ServiceAccount and print a `Bearer ...` UI login token.
 
 ### Changed
 - **Infra:** Reduced Envoy Gateway resource requests/limits.
@@ -16,9 +18,14 @@
 - **Observability:** Reduced Kibana resources and bounded Node heap; reduced Elasticsearch CPU and memory (ECK-compliant); set Elastic Agent/Fleet Server resources.
 - **Devops:** Reduced kpack controller requests via JSONPatch file.
 - **Devops:** Made `GHCR_MIRROR` opt-in (unset by default) and clarified usage notes.
+- **Stability:** Relaxed liveness/readiness probes across core components to reduce false restarts under local single-node load (baseline: `timeoutSeconds: 5`, `failureThreshold: 6`).
+- **Gateway:** Managed `luban-gateway` data-plane probes via `EnvoyProxy` (instead of directly patching the controller-managed Deployment).
+- **cert-manager:** Increased leader election tolerances and added resource requests to reduce controller starvation on local clusters.
+- **Elastic / ECK:** Disabled leader election for the single-replica ECK operator and increased resources to reduce `leader election lost` churn in local environments.
 
 ### Fixed
 - **Infra:** Reduced node total memory limits below 100% by lowering StarRocks limits and ECK operator memory limit.
+- **Data platform:** Reduced StarRocks restarts under query/load by widening probe failure windows (FE/CN) and relaxing StarRocks operator probes.
 
 
 ## [v0.6.13] - 2026-05-09

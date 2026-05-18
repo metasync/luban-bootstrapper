@@ -35,6 +35,12 @@ install:
 			APPS_DOMAIN=$(APPS_DOMAIN) \
 			APPS_PUBLIC_DOMAIN=$(APPS_PUBLIC_DOMAIN) && \
 			envsubst < gateway.yaml | $(KUBECTL) apply -f -; \
+		echo "Waiting for luban-gateway deployment..."; \
+		for i in $$(seq 1 60); do \
+			if $(KUBECTL) -n $(GATEWAY_NAMESPACE) get deployment luban-gateway >/dev/null 2>&1; then break; fi; \
+			sleep 2; \
+		done; \
+		$(KUBECTL) -n $(GATEWAY_NAMESPACE) rollout status deployment/luban-gateway --timeout=600s; \
 		echo "Creating Cloudflare secret..."; \
 		$(MAKE) create-secret; \
 		echo "Applying local ingress resources..."; \

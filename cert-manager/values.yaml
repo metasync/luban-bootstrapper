@@ -4,7 +4,16 @@ extraEnv:
   - name: GOGC
     value: "60"
 
+global:
+  leaderElection:
+    leaseDuration: 120s
+    renewDeadline: 90s
+    retryPeriod: 30s
+
 resources:
+  requests:
+    cpu: 200m
+    memory: 128Mi
   limits:
     cpu: 500m
     memory: 256Mi
@@ -15,7 +24,18 @@ webhook:
       value: 200MiB
     - name: GOGC
       value: "60"
+  livenessProbe:
+    timeoutSeconds: 5
+    periodSeconds: 10
+    failureThreshold: 6
+  readinessProbe:
+    timeoutSeconds: 5
+    periodSeconds: 10
+    failureThreshold: 6
   resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
     limits:
       cpu: 200m
       memory: 256Mi
@@ -27,6 +47,9 @@ cainjector:
     - name: GOGC
       value: "60"
   resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
     limits:
       cpu: 200m
       memory: 256Mi

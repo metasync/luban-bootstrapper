@@ -5,6 +5,14 @@ apiService:
 args:
   - --kubelet-insecure-tls
 
+livenessProbe:
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  timeoutSeconds: 5
+  failureThreshold: 6
+
 resources:
   requests:
     cpu: 50m

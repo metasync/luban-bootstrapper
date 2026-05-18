@@ -21,7 +21,15 @@ install:
 		--version $(ARGO_CD_CHART_VERSION) \
 		--set server.extraArgs={--insecure} \
 		--set server.readinessProbe.httpGet.scheme=HTTP \
+		--set server.readinessProbe.timeoutSeconds=5 \
+		--set server.readinessProbe.failureThreshold=6 \
 		--set server.livenessProbe.httpGet.scheme=HTTP \
+		--set server.livenessProbe.timeoutSeconds=5 \
+		--set server.livenessProbe.failureThreshold=6 \
+		--set repoServer.readinessProbe.timeoutSeconds=5 \
+		--set repoServer.readinessProbe.failureThreshold=6 \
+		--set repoServer.livenessProbe.timeoutSeconds=5 \
+		--set repoServer.livenessProbe.failureThreshold=6 \
 		--wait
 	@echo "Applying Gateway configuration..."
 	@export ARGO_CD_NAMESPACE=$(ARGO_CD_NAMESPACE) \

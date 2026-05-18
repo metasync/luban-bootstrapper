@@ -24,6 +24,27 @@ install:
 		--set persistence.enabled=true \
 		--timeout 10m \
 		--wait
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch deployment harbor-core --type='json' \
+		--patch-file probes-single-container.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch deployment harbor-jobservice --type='json' \
+		--patch-file probes-single-container.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch deployment harbor-nginx --type='json' \
+		--patch-file probes-single-container.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch deployment harbor-portal --type='json' \
+		--patch-file probes-single-container.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch deployment harbor-registry --type='json' \
+		--patch-file probes-registry.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch statefulset harbor-database --type='json' \
+		--patch-file probes-database.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) patch statefulset harbor-redis --type='json' \
+		--patch-file probes-redis.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status deployment/harbor-core --timeout=600s
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status deployment/harbor-jobservice --timeout=600s
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status deployment/harbor-nginx --timeout=600s
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status deployment/harbor-portal --timeout=600s
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status deployment/harbor-registry --timeout=600s
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status statefulset/harbor-database --timeout=600s
+	@$(KUBECTL) -n $(HARBOR_NAMESPACE) rollout status statefulset/harbor-redis --timeout=600s
 	@echo "Applying Gateway configuration..."
 	@export HARBOR_NAMESPACE=$(HARBOR_NAMESPACE) \
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \

@@ -2,3 +2,11 @@ resources:
   limits:
     cpu: 200m
     memory: 128Mi
+
+livenessProbe:
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  timeoutSeconds: 5
+  failureThreshold: 6

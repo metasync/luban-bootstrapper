@@ -16,6 +16,14 @@ install:
 		--namespace $(ARGO_EVENTS_NAMESPACE) \
 		--create-namespace \
 		--version $(ARGO_EVENTS_CHART_VERSION) \
+		--set controller.readinessProbe.timeoutSeconds=5 \
+		--set controller.readinessProbe.failureThreshold=6 \
+		--set controller.livenessProbe.timeoutSeconds=5 \
+		--set controller.livenessProbe.failureThreshold=6 \
+		--set webhook.readinessProbe.timeoutSeconds=5 \
+		--set webhook.readinessProbe.failureThreshold=6 \
+		--set webhook.livenessProbe.timeoutSeconds=5 \
+		--set webhook.livenessProbe.failureThreshold=6 \
 		--timeout 10m \
 		--wait
 

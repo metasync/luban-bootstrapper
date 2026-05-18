@@ -19,6 +19,11 @@ install:
 			--values values.yaml \
 			--wait; \
 	fi
+	@if $(KUBECTL) -n $(ENVOY_GATEWAY_NAMESPACE) get deployment envoy-gateway >/dev/null 2>&1; then \
+		$(KUBECTL) -n $(ENVOY_GATEWAY_NAMESPACE) patch deployment envoy-gateway --type='json' \
+			--patch-file envoy-gateway-probes.jsonpatch.yaml >/dev/null; \
+		$(KUBECTL) -n $(ENVOY_GATEWAY_NAMESPACE) rollout status deployment/envoy-gateway --timeout=600s; \
+	fi
 
 uninstall:
 	@echo "=== Uninstalling Envoy Gateway ==="

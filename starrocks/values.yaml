@@ -11,6 +11,9 @@ starrocks:
     replicas: 1
     service:
       type: "LoadBalancer"
+    startupProbeFailureSeconds: 900
+    livenessProbeFailureSeconds: 300
+    readinessProbeFailureSeconds: 300
     resources:
       requests:
         cpu: 500m
@@ -51,6 +54,9 @@ starrocks:
 
   starrocksCnSpec:
     replicas: 1
+    startupProbeFailureSeconds: 900
+    livenessProbeFailureSeconds: 300
+    readinessProbeFailureSeconds: 300
     resources:
       requests:
         cpu: 500m

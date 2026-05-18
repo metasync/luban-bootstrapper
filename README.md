@@ -25,6 +25,7 @@ The stack includes:
 - **Kubernetes Cluster** (Tested with [OrbStack](https://orbstack.dev/))
 - **Internet Access** (To pull Helm charts and container images)
 - `envsubst` (used to render Gateway/HTTPRoute templates; comes with `gettext`)
+- Local stability tuning guide: [docs/local-cluster-stability.md](./docs/local-cluster-stability.md)
 
 The following CLI tools can be installed automatically via `make cli`:
 - `kubectl`

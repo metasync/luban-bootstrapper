@@ -23,6 +23,9 @@ install:
 		--set ingress.enabled=false \
 		--timeout 10m \
 		--wait
+	@$(KUBECTL) -n $(JUPYTERHUB_NAMESPACE) patch deployment user-scheduler --type='json' \
+		--patch-file user-scheduler-probes.jsonpatch.yaml >/dev/null
+	@$(KUBECTL) -n $(JUPYTERHUB_NAMESPACE) rollout status deployment/user-scheduler --timeout=600s
 	@echo "Applying Gateway configuration..."
 	@export JUPYTERHUB_NAMESPACE=$(JUPYTERHUB_NAMESPACE) \
 		GATEWAY_NAMESPACE=$(GATEWAY_NAMESPACE) \

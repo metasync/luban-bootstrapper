@@ -1,0 +1,9 @@
+- op: replace
+  path: /spec/template/spec/containers/0/readinessProbe/timeoutSeconds
+  value: 5
+- op: replace
+  path: /spec/template/spec/containers/0/readinessProbe/failureThreshold
+  value: 6
+- op: replace
+  path: /spec/template/spec/containers/0/readinessProbe/periodSeconds
+  value: 10

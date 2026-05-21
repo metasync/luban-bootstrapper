@@ -5,6 +5,7 @@ include ../Makefile.env
 # workflow execution, and exposes the UI via Envoy Gateway.
 
 ARGO_REPO_URL ?= https://argoproj.github.io/argo-helm
+ARGO_WORKFLOWS_ADMIN_TOKEN_DURATION ?= 48h
 
 .PHONY: install uninstall get-token admin-token
 
@@ -57,7 +58,7 @@ admin-token:
 		--clusterrole=cluster-admin \
 		--serviceaccount=$(ARGO_WORKFLOWS_NAMESPACE):argo-workflows-admin \
 		--dry-run=client -o yaml | $(KUBECTL) apply -f - >/dev/null
-	@TOKEN=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) create token argo-workflows-admin); \
+	@TOKEN=$$($(KUBECTL) -n $(ARGO_WORKFLOWS_NAMESPACE) create token argo-workflows-admin --duration=$(ARGO_WORKFLOWS_ADMIN_TOKEN_DURATION)); \
 		echo "Bearer $$TOKEN"
 
 uninstall:

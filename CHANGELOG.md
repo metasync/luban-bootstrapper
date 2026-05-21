@@ -8,7 +8,7 @@
 - **Infra:** Added metrics-server installation via `make metrics-server` and included it in `make infra`.
 - **Infra:** Added tuning values for ECK operator resources to reduce local overcommit risk.
 - **Docs:** Added a local cluster stability & tuning guide (OrbStack-focused), including probe baseline recommendations and component-specific tuning locations.
-- **Argo Workflows:** Added `make -C argo-workflows admin-token` to create a cluster-admin ServiceAccount and print a `Bearer ...` UI login token.
+- **Argo Workflows:** Added `make -C argo-workflows admin-token` to create a cluster-admin ServiceAccount and print a `Bearer ...` UI login token (defaults to 48h; override via `ARGO_WORKFLOWS_ADMIN_TOKEN_DURATION`).
 
 ### Changed
 - **Infra:** Reduced Envoy Gateway resource requests/limits.

@@ -79,6 +79,7 @@ Argo Workflows auth is Kubernetes RBAC-backed:
 
 - Your UI token represents a Kubernetes identity (usually a ServiceAccount).
 - Permissions are evaluated against the namespace you are viewing (dropdown in the UI) and the resources Argo needs (`workflows.argoproj.io`, `workflowtemplates.argoproj.io`, etc.).
+- With SSO enabled, users may authenticate as a default fallback ServiceAccount (`user-default-login`) which has no RBAC by default.
 
 Common symptoms:
 

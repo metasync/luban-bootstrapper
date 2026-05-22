@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v0.6.15] - 2026-05-22
+
+### Added
+- **Argo Workflows:** Added an org-wide SSO fallback ServiceAccount (`user-default-login`) for default login identity selection (no RBAC by default).
+
 ## [v0.6.14] - 2026-05-18
 
 ### Added

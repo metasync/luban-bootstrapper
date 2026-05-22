@@ -14,3 +14,11 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: workflow-runner
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: user-default-login
+  annotations:
+    workflows.argoproj.io/rbac-rule: "true"
+    workflows.argoproj.io/rbac-rule-precedence: "0"

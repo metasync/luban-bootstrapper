@@ -220,6 +220,8 @@ make -C argo-workflows get-token
 ```
 Copy the output and paste it into the UI login prompt.
 
+For SSO-based login, the installation also creates a `user-default-login` ServiceAccount (matches all users; no RBAC by default). Access is granted via delegated RBAC in target namespaces.
+
 **Argo CD:**
 To retrieve the initial `admin` password:
 

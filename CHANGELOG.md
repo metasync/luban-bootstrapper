@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+- **Argo Workflows:**
+    - Upgraded to App v4.0.5 (Chart v1.0.14).
+    - Upgraded `argo` CLI to v4.0.5.
+
+### Documentation
+- Updated README Argo Workflows version references.
+
 ## [v0.6.15] - 2026-05-22
 
 ### Added

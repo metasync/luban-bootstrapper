@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.6.16] - 2026-06-01
+
 ### Changed
 - **Argo Workflows:**
     - Upgraded to App v4.0.5 (Chart v1.0.14).

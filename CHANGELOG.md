@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+- **Identity / Access:** Added a shared Keycloak bootstrap component with root `make keycloak` / `make uninstall-keycloak` targets, Gateway exposure on `idp.*` hostnames, and neutral `keycloak` namespace/service naming.
+- **Documentation:** Added lightweight component READMEs for `gateway`, `argo-workflows`, `harbor`, `elastic-stack`, and `keycloak`.
+
+### Changed
+- **Documentation:** Updated the root README to include the Keycloak component, link to component-specific READMEs, and document the new IdP hostname in the shared configuration overview.
+
 ## [v0.6.16] - 2026-06-01
 
 ### Changed

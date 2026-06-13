@@ -13,11 +13,11 @@ RESET := \033[0m
 
 .PHONY: help infra devops workspace data-platform observability \
 	cert-manager kubernetes-replicator metrics-server envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack harbor jupyterhub minio starrocks elastic-stack elastic-stack-core \
+	argo-workflows argo-cd argo-events kpack harbor jupyterhub keycloak minio starrocks elastic-stack elastic-stack-core \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
 	uninstall-infra uninstall-devops uninstall-workspace uninstall-data-platform uninstall-observability \
 	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-metrics-server uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-minio uninstall-starrocks uninstall-elastic-stack
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-keycloak uninstall-minio uninstall-starrocks uninstall-elastic-stack
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -39,6 +39,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kpack" "Install kpack ($(KPACK_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make harbor" "Install Harbor (Chart $(HARBOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make jupyterhub" "Install JupyterHub (Chart $(JUPYTERHUB_CHART_VERSION))"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make keycloak" "Install Keycloak for Dagster SSO (Chart $(KEYCLOAK_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make minio" "Install MinIO (Chart $(MINIO_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make minio-version" "Show MinIO image/pod version"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make starrocks" "Install StarRocks Operator (Chart $(STARROCKS_CHART_VERSION))"
@@ -63,6 +64,7 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-kpack" "Uninstall kpack"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-harbor" "Uninstall Harbor"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-jupyterhub" "Uninstall JupyterHub"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-keycloak" "Uninstall Keycloak"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-minio" "Uninstall MinIO"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-starrocks" "Uninstall StarRocks Operator"
 	@echo ""
@@ -73,6 +75,7 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_CHART_VERSION" "Argo Events chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KPACK_VERSION" "kpack version tag"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_CHART_VERSION" "JupyterHub chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KEYCLOAK_CHART_VERSION" "Keycloak chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "MINIO_CHART_VERSION" "MinIO chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_CHART_VERSION" "StarRocks chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "PACK_CLI_VERSION" "pack CLI version"
@@ -84,6 +87,7 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_EVENTS_NAMESPACE" "Namespace for Argo Events"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KPACK_NAMESPACE" "Namespace for kpack"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_NAMESPACE" "Namespace for JupyterHub"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KEYCLOAK_NAMESPACE" "Namespace for Keycloak"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_NAMESPACE" "Namespace for StarRocks"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ENVOY_GATEWAY_NAMESPACE" "Namespace for Envoy Gateway"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "CERT_MANAGER_NAMESPACE" "Namespace for cert-manager"
@@ -100,6 +104,7 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_HOST" "Hostname for Argo CD UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_HOST" "Hostname for Harbor UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "JUPYTERHUB_HOST" "Hostname for JupyterHub UI"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KEYCLOAK_HOST" "Hostname for Keycloak UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "MINIO_HOST" "Hostname for MinIO Console"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "STARROCKS_HOST" "Hostname for StarRocks"
 
@@ -165,6 +170,10 @@ harbor:
 jupyterhub:
 	@echo "=== Installing JupyterHub ==="
 	@$(MAKE) -C jupyterhub install
+
+keycloak:
+	@echo "=== Installing Keycloak ==="
+	@$(MAKE) -C keycloak install
 
 minio:
 	@echo "=== Installing MinIO ==="
@@ -239,6 +248,10 @@ uninstall-harbor:
 uninstall-jupyterhub:
 	@echo "=== Uninstalling JupyterHub ==="
 	@$(MAKE) -C jupyterhub uninstall
+
+uninstall-keycloak:
+	@echo "=== Uninstalling Keycloak ==="
+	@$(MAKE) -C keycloak uninstall
 
 uninstall-minio:
 	@echo "=== Uninstalling MinIO ==="

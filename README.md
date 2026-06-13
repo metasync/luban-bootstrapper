@@ -42,23 +42,31 @@ The following CLI tools can be installed automatically via `make cli`:
 
 ### Core CI/CD stack (`make devops`)
 
-- **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config.
+- **[argo-workflows/](./argo-workflows/)**: Argo Workflows Helm install & Gateway config. See [component README](./argo-workflows/README.md).
 - **[argo-cd/](./argo-cd/)**: Argo CD Helm install & Gateway config.
 - **[argo-events/](./argo-events/)**: Argo Events Helm install.
-- **[harbor/](./harbor/)**: Harbor Helm install & Gateway config.
+- **[harbor/](./harbor/)**: Harbor Helm install & Gateway config. See [component README](./harbor/README.md).
 - **[cert-manager/](./cert-manager/)**: cert-manager Helm install.
 - **[kubernetes-replicator/](./kubernetes-replicator/)**: Kubernetes Replicator Helm install.
 - **[metrics-server/](./metrics-server/)**: metrics-server Helm install (enables `kubectl top`).
 - **[envoy-gateway/](./envoy-gateway/)**: Envoy Gateway Helm OCI install.
-- **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA).
+- **[gateway/](./gateway/)**: Gateway API resources (GatewayClass, Gateway, Local CA). See [component README](./gateway/README.md).
 - **[kpack/](./kpack/)**: kpack raw manifest install.
 
 ### Optional components
 
-- **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config.
+- **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config. See [component README](./jupyterhub/README.md).
+- **[keycloak/](./keycloak/)**: Shared Keycloak identity provider for platform services. See [component README](./keycloak/README.md).
 - **[minio/](./minio/)**: MinIO Helm install & Gateway config.
 - **[starrocks/](./starrocks/)**: StarRocks Operator Helm install (shared-data; requires MinIO).
-- **[elastic-stack/](./elastic-stack/)**: Elastic Stack (Elasticsearch + Kibana) via ECK Operator.
+- **[elastic-stack/](./elastic-stack/)**: Elastic Stack (Elasticsearch + Kibana) via ECK Operator. See [component README](./elastic-stack/README.md).
+
+### Component Docs
+
+- **Infrastructure**: [gateway](./gateway/README.md)
+- **CI/CD**: [argo-workflows](./argo-workflows/README.md), [harbor](./harbor/README.md)
+- **Workspace and identity**: [jupyterhub](./jupyterhub/README.md), [keycloak](./keycloak/README.md)
+- **Observability**: [elastic-stack](./elastic-stack/README.md)
 
 ## Configuration
 
@@ -70,11 +78,12 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Argo Events (App v1.9.10)
   - Harbor (App v2.14.3)
   - JupyterHub (App v5.4.4)
+  - Keycloak (App 26.1.4)
   - MinIO (Image RELEASE.2025-10-15T17-29-55Z)
   - StarRocks Operator (App v1.11.4)
   - kpack (v0.17.1)
   - Kubernetes Replicator (v2.12.3)
-  - metrics-server (Chart 3.13.0 -> App 0.8.0)
+  - metrics-server (App 0.8.0)
   - Envoy Gateway (v1.7.1)
   - cert-manager (v1.20.1)
 - **CLI Versions**:
@@ -92,6 +101,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - `ARGO_WORKFLOWS_HOST` (`argo-workflows.luban.k8s.orb.local`)
   - `ARGO_CD_HOST` (`argocd.luban.k8s.orb.local`)
   - `HARBOR_HOST` (`harbor.luban.k8s.orb.local`)
+  - `KEYCLOAK_HOST` (`idp.apps.k8s.orb.local`)
 
 ## Installation
 

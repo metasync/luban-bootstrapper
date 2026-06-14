@@ -2,7 +2,7 @@ include ../Makefile.env
 
 KEYCLOAK_CHART_URL ?= oci://registry-1.docker.io/bitnamicharts/keycloak
 
-.PHONY: install uninstall create-admin-secret get-admin-password
+.PHONY: install uninstall create-admin-secret apply-realms-config get-admin-password
 
 create-admin-secret:
 	@if [ -n "$(KEYCLOAK_ADMIN_PASSWORD)" ]; then \
@@ -23,7 +23,14 @@ create-admin-secret:
 		--from-literal=$(KEYCLOAK_ADMIN_SECRET_KEY)="$$PASS" \
 		--dry-run=client -o yaml | $(KUBECTL) apply -f -
 
-install: create-admin-secret
+apply-realms-config:
+	@$(KUBECTL) create namespace $(KEYCLOAK_NAMESPACE) --dry-run=client -o yaml | $(KUBECTL) apply -f -
+	@$(KUBECTL) -n $(KEYCLOAK_NAMESPACE) create configmap $(KEYCLOAK_REALMS_CONFIGMAP_NAME) \
+		--from-file=realms/snd.yaml \
+		--from-file=realms/prd.yaml \
+		--dry-run=client -o yaml | $(KUBECTL) apply -f -
+
+install: create-admin-secret apply-realms-config
 	@echo "Installing Keycloak (Chart v$(KEYCLOAK_CHART_VERSION))..."
 	@helm upgrade --install $(KEYCLOAK_RELEASE_NAME) $(KEYCLOAK_CHART_URL) \
 		--namespace $(KEYCLOAK_NAMESPACE) \
@@ -32,6 +39,7 @@ install: create-admin-secret
 		--values values.yaml \
 		--set auth.existingSecret=$(KEYCLOAK_ADMIN_SECRET_NAME) \
 		--set auth.passwordSecretKey=$(KEYCLOAK_ADMIN_SECRET_KEY) \
+		--set keycloakConfigCli.existingConfigmap=$(KEYCLOAK_REALMS_CONFIGMAP_NAME) \
 		--wait \
 		--timeout 10m
 	@echo "Waiting for Keycloak rollout..."
@@ -56,6 +64,8 @@ uninstall:
 		KEYCLOAK_PUBLIC_HOST=$(KEYCLOAK_PUBLIC_HOST) \
 		KEYCLOAK_SERVICE_NAME=$(KEYCLOAK_SERVICE_NAME) && \
 		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
+	@echo "Deleting realm bootstrap ConfigMap..."
+	@$(KUBECTL) -n $(KEYCLOAK_NAMESPACE) delete configmap $(KEYCLOAK_REALMS_CONFIGMAP_NAME) --ignore-not-found=true || true
 	@echo "Uninstalling Keycloak..."
 	@helm uninstall $(KEYCLOAK_RELEASE_NAME) -n $(KEYCLOAK_NAMESPACE) || true
 	@echo "Deleting namespace $(KEYCLOAK_NAMESPACE)..."

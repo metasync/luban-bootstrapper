@@ -11,10 +11,10 @@ This component currently covers:
 - Keycloak installation
 - Gateway API exposure
 - admin bootstrap secret wiring
+- realm bootstrap for `snd` and `prd`
 
 This component does not yet cover:
 
-- realm bootstrap
 - LDAP or LDAPS federation
 - client bootstrap for downstream applications
 - per-platform auth proxy clients
@@ -39,10 +39,19 @@ Then run:
 make keycloak
 ```
 
+The install flow also applies repo-managed realm bootstrap files through the chart's `keycloak-config-cli` job.
+
 ## Access
 
 - Local: `https://${KEYCLOAK_HOST}`
 - Public: `https://${KEYCLOAK_PUBLIC_HOST}`
+
+## Bootstrap Realms
+
+- `snd`: includes the initial `dagster-access` group, the `snd-dagster-debug` validation client, and two placeholder users
+- `prd`: includes the realm shell and shared `groups` claim contract, but no production users
+
+Realm files live under [realms/](./realms/).
 
 ## Get The Admin Password
 

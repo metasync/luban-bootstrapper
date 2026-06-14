@@ -27,6 +27,13 @@ metrics:
   serviceMonitor:
     enabled: false
 
+keycloakConfigCli:
+  enabled: true
+  existingConfigmap: keycloak-realms
+  backoffLimit: 1
+  cleanupAfterFinished:
+    enabled: false
+
 postgresql:
   enabled: true
   auth:

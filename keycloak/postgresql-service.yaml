@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${KEYCLOAK_DB_SERVICE_NAME}
+spec:
+  selector:
+    app: ${KEYCLOAK_DB_SERVICE_NAME}
+  ports:
+    - name: postgres
+      port: ${KEYCLOAK_DB_PORT}
+      targetPort: 5432
+  type: ClusterIP

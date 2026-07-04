@@ -25,4 +25,4 @@ spec:
         value: /
     backendRefs:
     - name: ${KEYCLOAK_SERVICE_NAME}
-      port: 80
+      port: 8080

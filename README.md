@@ -56,7 +56,7 @@ The following CLI tools can be installed automatically via `make cli`:
 ### Optional components
 
 - **[jupyterhub/](./jupyterhub/)**: JupyterHub Helm install & Gateway config. See [component README](./jupyterhub/README.md).
-- **[keycloak/](./keycloak/)**: Shared Keycloak identity provider for platform services. See [component README](./keycloak/README.md).
+- **[keycloak/](./keycloak/)**: Shared Keycloak identity provider for platform services via the upstream Keycloak Operator. See [component README](./keycloak/README.md).
 - **[minio/](./minio/)**: MinIO Helm install & Gateway config.
 - **[starrocks/](./starrocks/)**: StarRocks Operator Helm install (shared-data; requires MinIO).
 - **[elastic-stack/](./elastic-stack/)**: Elastic Stack (Elasticsearch + Kibana) via ECK Operator. See [component README](./elastic-stack/README.md).
@@ -78,7 +78,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Argo Events (App v1.9.10)
   - Harbor (App v2.14.3)
   - JupyterHub (App v5.4.4)
-  - Keycloak (App 26.1.4)
+  - Keycloak (Operator/App 26.4.5)
   - MinIO (Image RELEASE.2025-10-15T17-29-55Z)
   - StarRocks Operator (App v1.11.4)
   - kpack (v0.17.1)
@@ -178,6 +178,7 @@ make infra
 
 ```bash
 make workspace
+make keycloak
 make data-platform
 make observability
 ```
@@ -198,6 +199,7 @@ Or install them individually:
 
 ```bash
 make jupyterhub
+make keycloak
 make minio
 make starrocks
 ```
@@ -212,6 +214,7 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 | **Argo CD** | `https://argocd.<K8S_DOMAIN>` | `https://argocd.<LUBAN_PUBLIC_DOMAIN>` | User: `admin` |
 | **Harbor** | `https://harbor.<K8S_DOMAIN>` | `https://harbor.<LUBAN_PUBLIC_DOMAIN>` | User: `admin` |
 | **JupyterHub** | `https://jupyterhub.<K8S_DOMAIN>` | `https://jupyterhub.<LUBAN_PUBLIC_DOMAIN>` | Any User |
+| **Keycloak** | `https://idp.<APPS_DOMAIN>` | `https://idp.<APPS_PUBLIC_DOMAIN>` | User: bootstrap admin; browser OIDC redirects use the public host by default |
 | **MinIO Console** | `https://minio-console.<K8S_DOMAIN>` | `https://minio-console.<LUBAN_PUBLIC_DOMAIN>` | User: `MINIO_ROOT_USER` |
 | **StarRocks FE** | `https://starrocks.<K8S_DOMAIN>` | `https://starrocks.<LUBAN_PUBLIC_DOMAIN>` | User: `root` (empty password) |
 | **Kibana** | `https://kibana.<K8S_DOMAIN>` | `https://kibana.<LUBAN_PUBLIC_DOMAIN>` | User: `elastic` |
@@ -251,6 +254,15 @@ To retrieve the initial `admin` password:
 ```bash
 make -C harbor get-password
 ```
+
+**Keycloak:**
+To retrieve the bootstrap admin password:
+
+```bash
+make -C keycloak get-admin-password
+```
+
+The local `idp.<APPS_DOMAIN>` route is still useful for direct cluster access, but Keycloak advertises the canonical public hostname by default. Browser login and OIDC discovery therefore still depend on `idp.<APPS_PUBLIC_DOMAIN>` being reachable unless you override `KEYCLOAK_CANONICAL_HOST`.
 
 **Kibana (Elastic Stack via ECK):**
 

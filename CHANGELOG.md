@@ -2,14 +2,16 @@
 
 ## [Unreleased]
 
+## [v0.6.17] - 2026-07-05
+
 ### Added
-- **Identity / Access:** Added a shared Keycloak bootstrap component with root `make keycloak` / `make uninstall-keycloak` targets, Gateway exposure on `idp.*` hostnames, and neutral `keycloak` namespace/service naming.
-- **Identity / Access:** Added repo-managed Keycloak realm bootstrap for `snd` and `prd` via the chart's `keycloak-config-cli` job, including the initial `groups` claim scope and sandbox validation client.
+- **Identity / Access:** Added a shared Keycloak bootstrap component with root `make keycloak` / `make uninstall-keycloak` targets, Gateway exposure on `idp.*` hostnames, and neutral `keycloak` namespace naming.
+- **Identity / Access:** Added repo-managed Keycloak realm bootstrap for `snd` and `prd` via upstream `KeycloakRealmImport` resources, including the initial `groups` claim scope and sandbox validation client.
 - **Documentation:** Added lightweight component READMEs for `gateway`, `argo-workflows`, `harbor`, `elastic-stack`, and `keycloak`.
 
 ### Changed
 - **Documentation:** Updated the root README to include the Keycloak component, link to component-specific READMEs, and document the new IdP hostname in the shared configuration overview.
-- **Keycloak:** Extended the component install flow to publish realm bootstrap files as a ConfigMap before Helm install or upgrade.
+- **Keycloak:** Replaced the Bitnami chart-based install with the upstream Keycloak Operator, the official Keycloak image, repo-managed PostgreSQL manifests, and `Keycloak` custom resources.
 
 ## [v0.6.16] - 2026-06-01
 

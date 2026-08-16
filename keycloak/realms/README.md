@@ -12,4 +12,5 @@ This directory contains repo-managed realm bootstrap files for the shared Keyclo
 - These files are applied through the upstream Keycloak Operator as `KeycloakRealmImport` resources.
 - Realm imports are create-only. If a realm already exists, later changes here are not reconciled back into Keycloak.
 - The sandbox bootstrap passwords are placeholders for initial validation only.
+- The shared gateway clients here intentionally start with empty redirect/origin/logout URL lists. Project-specific gateway hosts are registered later by `luban-ci` during gateway provisioning.
 - Downstream application clients beyond the shared gateway bootstrap clients are intentionally not managed here yet.

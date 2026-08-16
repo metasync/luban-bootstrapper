@@ -1,9 +1,13 @@
 include ../Makefile.env
+include ../cli/common.mk
 
 .PHONY: install uninstall check-minio
 
 check-minio:
 	@$(MAKE) -C ../minio check
+
+# Purge control (default = 0, keep StarRocks FE/BE/CN PVCs and data on uninstall)
+PURGE_DATA ?= 0
 
 install: check-minio
 	@if [ ! -f ../secrets/minio.env ]; then echo "Missing ../secrets/minio.env (create it with MINIO_ROOT_USER and MINIO_ROOT_PASSWORD)"; exit 1; fi
@@ -40,5 +44,4 @@ uninstall:
 		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
 	@echo "Uninstalling StarRocks..."
 	@helm uninstall starrocks -n $(STARROCKS_NAMESPACE) || true
-	@echo "Deleting namespace $(STARROCKS_NAMESPACE)..."
-	@$(KUBECTL) delete namespace $(STARROCKS_NAMESPACE) --ignore-not-found=true || true
+	$(call purge-namespace,$(STARROCKS_NAMESPACE))

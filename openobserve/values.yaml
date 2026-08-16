@@ -1,0 +1,165 @@
+# Luban default overrides for OpenObserve (Chart 0.92.x / App v0.92.x).
+#
+# Design goals:
+#   - Minimal all-in-one single-node-ish deployment for local dev / small teams.
+#   - S3 object storage via Luban-managed MinIO (NOT the chart's embedded
+#     minio.enabled=true sidecar, which would fight with luban-bootstrapper/minio).
+#   - Disables Postgres metadata backend (requires cloudnative-pg operator not yet
+#     part of luban-bootstrapper; metadata falls back to S3 + local WAL).
+#   - Disables reportserver and o2ai assistant to save memory on OrbStack.
+#
+# Credentials and S3 endpoints are set dynamically from Makefile vars via
+# --set. See openobserve/Makefile for the authoritative wiring.
+
+image:
+  pullPolicy: IfNotPresent
+  # Default OpenObserve chart ships enterprise.enabled=true and points image.oss and
+  # image.enterprise at o2cr.ai — a registry that requires an account for both
+  # OSS AND Enterprise tags. Both return "Not Authorized" for anonymous pulls.
+  #
+  # Luban default override: run the community OSS image only. Two authoritative
+  # public mirrors are available for v0.92.0; we default to docker hub
+  # openobserve/openobserve which verified anonymous pull. (public.ecr.aws/zinclabs
+  # is the second verified public mirror; swap below if egress blocks docker.io.)
+  oss:
+    repository: openobserve/openobserve
+    tag: "v0.92.0"
+  enterprise:
+    repository: public.ecr.aws/zinclabs/openobserve-enterprise
+    tag: "v0.92.0"
+  reportserver:
+    repository: o2cr.ai/openobserve/report-server
+    tag: "v0.11.2-88574bc"
+  busybox:
+    repository: public.ecr.aws/docker/library/busybox
+    tag: 1.36.1
+  o2ai:
+    repository: ghcr.io/openobserve/o2-ai
+    tag: "v0.92.0"
+
+enterprise:
+  enabled: false
+
+# Disable reportserver / O2 AI to cut memory footprint (~1.3 GB total).
+# Replica counts for OSS edition (not role-based HA; single node OK).
+replicaCount:
+  ingester: 1
+  querier: 1
+  router: 1
+  scheduler: 1
+  alertquerier: 0
+  compactor: 1
+  reportserver: 0
+  o2ai: 0
+
+reportserver:
+  enabled: false
+
+o2ai:
+  enabled: false
+
+# Use Luban's separate MinIO install (namespace: minio). Never let the chart install
+# its own MinIO replicas; buckets; they'd collide with luban-bootstrapper/minio.
+minio:
+  enabled: false
+
+# Do NOT install cloudnative-pg operator; metadata is persisted via S3 bucket +
+# local ephemeral postgres (chart default = cloudnative-pg CR, which requires
+# a separate operator. Setting enabled=false means OO will use S3 + embedded sqlite.
+#
+# Note: If cloudnative-pg is later added, do NOT re-enable postgres here without
+# also installing prometheus-operator CRDs first — the upstream chart creates
+# PodMonitor CRs via postgres.monitoring.enablePodMonitor=true which would
+# fail on luban base. Instead, install CNPG explicitly then add a separate
+# HelmRelease for the OpenObserve postgres Cluster CR.
+postgres:
+  enabled: false
+
+# Credentials. Authoritative source = openobserve/Makefile which reads secrets
+# from ../secrets/openobserve.env (fallback defaults) and overlays auth.* via
+# helm --set. Placeholders here are intentionally empty: bypassing the Makefile
+# and running `helm upgrade --install ... -f values.yaml` will fail explicitly
+# on the empty auth block, which is safer than deploying a known-public password.
+auth:
+  ZO_ROOT_USER_EMAIL: ""
+  ZO_ROOT_USER_PASSWORD: ""
+  ZO_ROOT_USER_TOKEN: ""
+  ZO_S3_ACCESS_KEY: ""
+  ZO_S3_SECRET_KEY: ""
+
+# S3 / object storage. Values are overridden in Makefile install step with:
+#   ZO_S3_SERVER_URL   = http://minio.minio.svc.cluster.local:9000
+#   ZO_S3_BUCKET_NAME= openobserve
+#   ZO_S3_FEATURE_FORCE_HOSTED_STYLE=false (path-style access, required for MinIO)
+# We document defaults here for reviewers' convenience; Makefile --set wins.
+config:
+  ZO_S3_PROVIDER: "s3"
+  ZO_S3_SERVER_URL: ""
+  ZO_S3_REGION_NAME: "us-east-1"
+  ZO_S3_BUCKET_NAME: "openobserve"
+  ZO_S3_BUCKET_PREFIX: ""
+  ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
+  ZO_S3_CONNECT_TIMEOUT: "10"
+  ZO_S3_REQUEST_TIMEOUT: "3600"
+  ZO_S3_MAX_RETRIES: "10"
+  ZO_LOCAL_MODE: "true"
+  # Metadata / distributed coordination.
+  # Luban local cluster runs WITHOUT the cloudnative-pg Postgres operator (that is the
+  # only source of the "o2-openobserve-postgres-rw" service referenced by the chart default
+  # ZO_META_STORE=postgres). We therefore default meta_store to "sqlite" — a file-backed
+  # local DB. Cluster coordination still goes through NATS (ZO_CLUSTER_COORDINATOR=nats).
+  # For a true multi-node HA Luban cluster install cloudnative-pg and switch this back to
+  # "postgres" so metadata changes replicate via CNPG streaming replication.
+  ZO_META_STORE: "sqlite"
+  ZO_CLUSTER_COORDINATOR: "nats"
+  ZO_QUEUE_STORE: "nats"
+
+# Keep disk caches small on OrbStack; local-path StorageClass.
+scheduler:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+ingester:
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+
+querier:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+compactor:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+alertquerier:
+  persistence:
+    enabled: false
+    size: 10Gi
+    storageClass: ""
+
+# Default service (we HTTPRoute via Gateway API; not LoadBalancer or Ingress.
+service:
+  type: ClusterIP
+  http_port: 5080
+  grpc_port: 5081
+  report_server_port: 5082
+
+# ServiceMonitor disabled (kube-prometheus-stack + prometheus-operator CRDs not installed in Luban base)
+serviceMonitor:
+  enabled: false
+
+# NATS dependency: disable its PodMonitor subchart for the same CRD-not-installed reason.
+# nats.promExporter still works (serves /metrics on the pod); just no PodMonitor CR.
+nats:
+  promExporter:
+    enabled: true
+    podMonitor:
+      enabled: false

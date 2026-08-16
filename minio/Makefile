@@ -1,8 +1,12 @@
 include ../Makefile.env
+include ../cli/common.mk
 
 .PHONY: install uninstall check build-image version
 
 MINIO_REPO_URL ?= https://charts.min.io/
+
+# Purge control (default = 0, keep MinIO PVC / all buckets + data on uninstall)
+PURGE_DATA ?= 0
 
 install:
 	@if [ ! -f ../secrets/minio.env ]; then echo "Missing ../secrets/minio.env (create it with MINIO_ROOT_USER and MINIO_ROOT_PASSWORD)"; exit 1; fi
@@ -87,7 +91,6 @@ uninstall:
 		MINIO_HOST=$(MINIO_HOST) \
 		MINIO_PUBLIC_HOST=$(MINIO_PUBLIC_HOST) && \
 		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
-	@echo "Uninstalling MinIO..."
+	@echo "Uninstalling MinIO (Helm release)..."
 	@helm uninstall $(MINIO_RELEASE_NAME) -n $(MINIO_NAMESPACE) || true
-	@echo "Deleting namespace $(MINIO_NAMESPACE)..."
-	@$(KUBECTL) delete namespace $(MINIO_NAMESPACE) --ignore-not-found=true || true
+	$(call purge-namespace,$(MINIO_NAMESPACE))

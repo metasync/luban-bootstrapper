@@ -69,6 +69,8 @@ Keycloak now uses `KEYCLOAK_CANONICAL_HOST` as its advertised OIDC hostname, whi
 - `snd`: includes the initial `dagster-access` group, the `snd-dagster-debug` validation client, the `snd-dagster-gateway` client, and two placeholder users
 - `prd`: includes the realm shell, the shared `groups` claim contract, the `prd-dagster-gateway` client, and no production users
 
+The gateway clients stay environment-level even when `luban-ci` provisions project-specific gateway hosts. `luban-bootstrapper` now boots those shared clients with the baseline claim contract only and leaves redirect/origin/logout URL lists empty. `luban-ci` fills in exact gateway hosts later during gateway provisioning because released Keycloak versions do not honor wildcard subdomain redirects for OIDC clients.
+
 Current sandbox bootstrap users:
 
 - `alice.dagster` / `change-me-snd-alice`
@@ -81,6 +83,7 @@ Realm import files live under [realms/](./realms/).
 - The Operator watches the same namespace as the Keycloak instance by default.
 - `KeycloakRealmImport` is create-only; it does not reconcile later edits back into an existing realm.
 - Because of that create-only behavior, newly added clients become fully declarative only on a fresh realm import or reinstall. Existing realms may need a one-time manual client creation when the client is introduced after the initial import.
+- Dagster Gateway bootstrap clients intentionally start with empty redirect/origin/logout URL lists. Exact gateway hosts are added later by `luban-ci` when those gateways are provisioned.
 - The PostgreSQL manifests here are intended for bootstrap and local cluster usage, not as the final production database architecture.
 - Re-running install reapplies both the PostgreSQL `Service` and `StatefulSet`, so mutable settings such as image, probes, and resources stay aligned with the repo.
 - If you change immutable PostgreSQL storage fields later, Kubernetes will reject the re-apply and you will need an explicit database migration or reinstall path.

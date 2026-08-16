@@ -1,4 +1,5 @@
 include ../Makefile.env
+include ../cli/common.mk
 
 .PHONY: install uninstall install-operator uninstall-operator install-stack uninstall-stack install-fleet-apm uninstall-fleet-apm get-elastic-password
 
@@ -7,6 +8,9 @@ ECK_OPERATOR_RELEASE_NAME ?= elastic-operator
 
 ELASTICSEARCH_NAME ?= elasticsearch
 KIBANA_NAME ?= kibana
+
+# Purge control (default = 0, keep user data on uninstall)
+PURGE_DATA ?= 0
 
 install: install-operator install-stack
 
@@ -150,14 +154,12 @@ uninstall-stack:
 		KIBANA_PUBLIC_HOST=$(KIBANA_PUBLIC_HOST) \
 		KIBANA_SERVICE_NAME=$(KIBANA_NAME)-kb-http && \
 		envsubst '$$ELASTIC_STACK_NAMESPACE $$GATEWAY_NAMESPACE $$KIBANA_HOST $$KIBANA_PUBLIC_HOST $$KIBANA_SERVICE_NAME' < gateway-kibana.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
-	@echo "Deleting Kibana and Elasticsearch resources..."
+	@echo "Deleting Kibana and Elasticsearch CRs (releases PVCs bound to ECK data volumes)..."
 	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) delete kibana $(KIBANA_NAME) --ignore-not-found=true || true
 	@$(KUBECTL) -n $(ELASTIC_STACK_NAMESPACE) delete elasticsearch $(ELASTICSEARCH_NAME) --ignore-not-found=true || true
-	@echo "Deleting namespace $(ELASTIC_STACK_NAMESPACE)..."
-	@$(KUBECTL) delete namespace $(ELASTIC_STACK_NAMESPACE) --ignore-not-found=true || true
+	$(call purge-namespace,$(ELASTIC_STACK_NAMESPACE))
 
 uninstall-operator:
 	@echo "Uninstalling ECK Operator..."
 	@helm uninstall $(ECK_OPERATOR_RELEASE_NAME) -n $(ELASTIC_SYSTEM_NAMESPACE) || true
-	@echo "Deleting namespace $(ELASTIC_SYSTEM_NAMESPACE)..."
-	@$(KUBECTL) delete namespace $(ELASTIC_SYSTEM_NAMESPACE) --ignore-not-found=true || true
+	$(call purge-namespace,$(ELASTIC_SYSTEM_NAMESPACE))

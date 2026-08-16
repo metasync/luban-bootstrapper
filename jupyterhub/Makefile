@@ -1,4 +1,5 @@
 include ../Makefile.env
+include ../cli/common.mk
 
 # JupyterHub installation and Gateway routing configuration.
 # Installs JupyterHub using the official Helm chart and configures an HTTPS
@@ -7,6 +8,9 @@ include ../Makefile.env
 JUPYTERHUB_REPO_URL ?= https://jupyterhub.github.io/helm-chart/
 
 .PHONY: install uninstall
+
+# Purge control (default = 0, keep hub DB and user home PVCs on uninstall)
+PURGE_DATA ?= 0
 
 install:
 	@echo "Adding JupyterHub Helm repository..."
@@ -40,7 +44,6 @@ uninstall:
 		JUPYTERHUB_HOST=$(JUPYTERHUB_HOST) \
 		JUPYTERHUB_PUBLIC_HOST=$(JUPYTERHUB_PUBLIC_HOST) && \
 		envsubst < gateway.yaml | $(KUBECTL) delete -f - --ignore-not-found=true || true
-	@echo "Uninstalling JupyterHub..."
+	@echo "Uninstalling JupyterHub (Helm release)..."
 	@helm uninstall jupyterhub -n $(JUPYTERHUB_NAMESPACE) || true
-	@echo "Deleting namespace $(JUPYTERHUB_NAMESPACE)..."
-	@$(KUBECTL) delete namespace $(JUPYTERHUB_NAMESPACE) --ignore-not-found=true || true
+	$(call purge-namespace,$(JUPYTERHUB_NAMESPACE))

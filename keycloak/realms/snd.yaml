@@ -66,14 +66,8 @@ spec:
         implicitFlowEnabled: false
         directAccessGrantsEnabled: false
         serviceAccountsEnabled: false
-        redirectUris:
-          - http://localhost:5173/oidc/callback
-          - https://snd-dagster-gateway.apps.k8s.orb.local/oidc/callback
-          - https://snd-dagster-gateway.apps.metasync.cc/oidc/callback
-        webOrigins:
-          - http://localhost:5173
-          - https://snd-dagster-gateway.apps.k8s.orb.local
-          - https://snd-dagster-gateway.apps.metasync.cc
+        redirectUris: []
+        webOrigins: []
         defaultClientScopes:
           - groups
           - profile

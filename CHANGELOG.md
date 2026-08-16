@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+## [v0.6.18] - 2026-08-17
+
+### Added
+- **Observability:** Added OpenObserve as a lightweight observability alternative (~9 pods / 30 Gi) vs Elastic Stack (~25 pods / 100 Gi). S3-backed by Luban MinIO. Install via `make openobserve`; uninstall via `make uninstall-openobserve`.
+- **Observability:** Added Gateway HTTPRoute exposure for OpenObserve (local and public hostnames), correctly attached to `luban-local` / `luban-public` Gateway listeners.
+- **Observability:** Added `make -C openobserve check` readiness target, which prints the UI URL plus the in-cluster and Gateway OTLP base endpoints (`/api/default/otlp`). Signal-specific suffixes are appended automatically by SDKs.
+- **Observability:** Added OpenObserve-specific PURGE handling: when `PURGE_DATA=1`, the uninstall target deletes the MinIO S3 bucket (via `mc rb --force`, credentials passed through `MC_HOST_LUBAN_MINIO` env var, never on argv).
+- **Makefiles:** Added `PROJECT_VERSION` variable to `Makefile.env` (matches the git release tag) so the bootstrapper version is visible in shared config.
+- **Makefiles:** Added new meta-target `make uninstall-observability-all` which uninstalls both Elastic Stack and OpenObserve together; `make uninstall-observability` continues to uninstall only Elastic Stack (symmetric with `make observability`).
+
+### Changed
+- **Observability:** `make observability` help text now explicitly notes that OpenObserve is a separate lightweight alternative installed via `make openobserve`.
+- **Documentation:** Root README now documents the three granular uninstall targets (`uninstall-observability` / `uninstall-observability-all` / `uninstall-openobserve`) in the cleanup section, along with the correct OTLP base endpoint and the required MinIO pre-requisite (`make minio` before OpenObserve).
+- **Makefiles:** Added `prune clean` to the root `.PHONY` declaration so filesystem collisions (a file named `prune` or `clean` in the repo root) will never skip container image cleanup.
+
+### Fixed
+- **Gateway / Routing (OpenObserve):** Fixed `HTTPRoute.spec.rules[].matches[].headers` and `sectionName` binding. Earlier draft used the apps-Gateway listener set (`apps-local` / `apps-public`), which returns Envoy 404 blank pages for `*.luban.*` hostnames. Routes now correctly target `luban-local` / `luban-public`.
+- **Makefiles (purge PVC wait):** `purge-ns-pvcs-if-requested` used a loop-scoped `REMAINING` counter and printed nothing on `PURGE_WAIT` timeout, causing namespace delete to run silently against lingering PVCs and hang in `Terminating` until finalizers cleared. The helper now hoists `REMAINING` out of the loop and prints an explicit warning with remaining PVC count, `PURGE_WAIT` value, and hang consequence.
+- **Observability (OpenObserve install):** Install path relied only on `ZO_LOCAL_MODE=true` auto-create for the S3 bucket. If users supplied scoped credentials (without `s3:CreateBucket`), OO pods would crashloop with opaque S3 `AccessDenied` errors while Helm reported success. Install now pre-creates the bucket idempotently via `mc mb --ignore-existing` using the same `MC_HOST_LUBAN_MINIO` env-var pattern as the uninstall path, with graceful fallbacks when `mc` is missing or the command returns non-zero (auto-create is still used then).
+- **Observability (OpenObserve defaults):** Fixed several install-time defaults: image switched from private `o2cr.ai` registry (anonymous 401) to upstream Docker Hub `openobserve/openobserve`; meta store pinned to SQLite with NATS as cluster/queue coordinator (avoided PostgreSQL default crashloops); `nats.promExporter.podMonitor` disabled (keeps CRD footprint minimal); enterprise and postgres.enabled toggles disabled; `values.yaml` duplicate top-level `postgres:` key removed; auth placeholder empty strings are overridden via `helm --set` (no hardcoded credentials in values).
+- **Makefiles (usage comment drift):** `cli/common.mk` usage comment previously advertised two non-existent shared helpers `$(call uninstall-gateway,…)` and `$(call helm-uninstall,…)` which expand to empty strings. Rewrote the usage block to accurately document today's real per-component pattern (inline `helm uninstall` + inline `envsubst` HTTPRoute delete + `$(call purge-namespace, NS)`) and explicitly list the four helpers that are actually defined.
+
+### Documentation
+- Root README OpenObserve section cleaned up: removed 2026-08-16 cleanup-session historic references and replaced with prerequisite-neutral instructions (run `make minio` first per step 0).
+- PURGE warning, `uninstall-observability-all` symmetry, and OpenObserve `mc` credential env-var pattern are now all documented in the uninstall section.
+
 ## [v0.6.17] - 2026-07-05
 
 ### Added

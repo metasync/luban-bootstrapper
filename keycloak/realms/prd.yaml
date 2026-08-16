@@ -50,12 +50,8 @@ spec:
         implicitFlowEnabled: false
         directAccessGrantsEnabled: false
         serviceAccountsEnabled: false
-        redirectUris:
-          - https://dagster-gateway.apps.k8s.orb.local/oidc/callback
-          - https://dagster-gateway.apps.metasync.cc/oidc/callback
-        webOrigins:
-          - https://dagster-gateway.apps.k8s.orb.local
-          - https://dagster-gateway.apps.metasync.cc
+        redirectUris: []
+        webOrigins: []
         defaultClientScopes:
           - groups
           - profile

@@ -18,6 +18,9 @@ The stack includes:
 - **Optional stack components (installed separately)**
   - **Workspace**: **JupyterHub** (Multi-user Notebook Platform)
   - **Data platform**: **MinIO** (S3-compatible object storage) + **StarRocks (shared-data)** (High-performance Analytical Database)
+  - **Observability alternatives** (pick one or coexist):
+    - **Elastic Stack (ECK)** → Fleet-managed APM, Elasticsearch, Kibana
+    - **OpenObserve** → Logs, Metrics, Traces, Dashboards backed by Luban MinIO S3 (recommended low-footprint alternative)
 
 ## Prerequisites
 
@@ -60,6 +63,7 @@ The following CLI tools can be installed automatically via `make cli`:
 - **[minio/](./minio/)**: MinIO Helm install & Gateway config.
 - **[starrocks/](./starrocks/)**: StarRocks Operator Helm install (shared-data; requires MinIO).
 - **[elastic-stack/](./elastic-stack/)**: Elastic Stack (Elasticsearch + Kibana) via ECK Operator. See [component README](./elastic-stack/README.md).
+- **[openobserve/](./openobserve/)**: OpenObserve (Logs, Metrics, Traces, Dashboards) — low-footprint observability, S3-backed via Luban MinIO.
 
 ### Component Docs
 
@@ -81,6 +85,7 @@ Shared configuration lives in [Makefile.env](./Makefile.env). You can customize:
   - Keycloak (Operator/App 26.4.5)
   - MinIO (Image RELEASE.2025-10-15T17-29-55Z)
   - StarRocks Operator (App v1.11.4)
+  - **OpenObserve (Chart 0.92.0 / App v0.92.0)**
   - kpack (v0.17.1)
   - Kubernetes Replicator (v2.12.3)
   - metrics-server (App 0.8.0)
@@ -204,6 +209,37 @@ make minio
 make starrocks
 ```
 
+### 5. Install OpenObserve (lightweight observability alternative to Elastic Stack)
+
+**OpenObserve** provides logs/metrics/traces + dashboards on Luban, backed by **Luban MinIO S3** (run `make minio` first, per prereq step 0). Default footprint is ~9 pods / 30 Gi of PVC cache, compared to ~25 pods / 100 Gi of Elastic Stack.
+
+Before install:
+0. Ensure **MinIO is installed** (`make minio`). OpenObserve writes its data to an S3 bucket in Luban's managed MinIO; the install step will crash-loop if `minio.minio.svc.cluster.local:9000` is unreachable.
+1. Ensure `secrets/minio.env` exists (root credentials used to create/write the `openobserve` S3 bucket).
+2. Optionally create `secrets/openobserve.env` to override the default root creds:
+   ```bash
+   OO_ROOT_USER_EMAIL=you@your-company.com
+   OO_ROOT_USER_PASSWORD='YourStrongPassword!1'
+   ```
+
+Install:
+
+```bash
+make openobserve
+```
+
+After install:
+- UI local: `https://openobserve.<K8S_DOMAIN>` (default: `https://openobserve.luban.k8s.orb.local`)
+- UI public: `https://openobserve.<LUBAN_PUBLIC_DOMAIN>`
+- Default login: `root@example.com` / `Complexpass#123` (unless overridden in `secrets/openobserve.env`)
+- OTLP HTTP endpoint local: `http://openobserve-router.openobserve.svc.cluster.local:5080/api/default/otlp`
+- OTLP HTTP endpoint public: `https://openobserve.<K8S_DOMAIN>/api/default/otlp`
+
+**Switching Luban CI OTLP backends between OpenObserve ↔ Elastic Stack** is documented inline in `luban-ci/manifests/config/luban-config.yaml`:
+- Both backends are commented-out examples in the `otel_exporter_otlp_endpoint` block.
+- Uncomment the one you want, then add the matching `otel_exporter_otlp_headers` in a **secret-backed workspace overlay** (never plaintext the creds in the shared configmap).
+- OpenObserve expects Basic auth; Elastic Fleet APM expects a Bearer secret token.
+
 ## Accessing the UIs
 
 The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gateway`) supports wildcard subdomains for both local development and public access.
@@ -218,6 +254,7 @@ The stack uses Envoy Gateway to expose UIs via HTTPS. The gateway (`luban-gatewa
 | **MinIO Console** | `https://minio-console.<K8S_DOMAIN>` | `https://minio-console.<LUBAN_PUBLIC_DOMAIN>` | User: `MINIO_ROOT_USER` |
 | **StarRocks FE** | `https://starrocks.<K8S_DOMAIN>` | `https://starrocks.<LUBAN_PUBLIC_DOMAIN>` | User: `root` (empty password) |
 | **Kibana** | `https://kibana.<K8S_DOMAIN>` | `https://kibana.<LUBAN_PUBLIC_DOMAIN>` | User: `elastic` |
+| **OpenObserve** | `https://openobserve.<K8S_DOMAIN>` | `https://openobserve.<LUBAN_PUBLIC_DOMAIN>` | Default user: `root@example.com` (OTLP requires Basic auth or ingestion token) |
 
 New services can be exposed by binding an `HTTPRoute` to the `luban-local` listener on `luban-gateway` with a `*.<K8S_DOMAIN>` hostname (or `luban-public` for `*.<LUBAN_PUBLIC_DOMAIN>`).
 
@@ -364,11 +401,45 @@ To remove everything (apps, infra, and namespaces):
 ```bash
 make uninstall-workspace
 make uninstall-data-platform
+make uninstall-observability   # Elastic Stack only — matches `make observability`
+make uninstall-observability-all   # Elastic Stack + OpenObserve, full observability wipe
+make uninstall-openobserve     # only uninstall *just* OpenObserve, keep Elastic (if installed)
 make uninstall-devops
 make uninstall-infra
 ```
 
 These targets ensure a clean slate by removing namespaces (`argo`, `argocd`, `envoy-gateway-system`, etc.) to prevent issues with lingering resources.
+
+### Graceful PVC / dangling-PV cleanup — the `PURGE_DATA` flag
+
+**All component uninstalls (jupyterhub / elastic-stack / minio / starrocks / openobserve) now accept a `PURGE_DATA` Make variable:**
+
+```bash
+# SAFE DEFAULT — keeps all PVCs, PVs, and MinIO/S3 bucket data.
+make uninstall-jupyterhub          # PURGE_DATA=0 implicitly
+make uninstall-openobserve         # keeps PVCs + S3 openobserve bucket
+
+# PURGE — explicitly delete PVCs (and OpenObserve S3 bucket if mc CLI exists):
+make uninstall-jupyterhub PURGE_DATA=1
+make uninstall-elastic-stack PURGE_DATA=1
+make uninstall-openobserve PURGE_DATA=1
+```
+
+Semantics (see [cli/common.mk](./cli/common.mk) for exact implementation):
+
+1. **PVC pre-delete pass (only when `PURGE_DATA=1`)**: Lists every PVC in the target namespace and deletes them explicitly, then waits up to `PURGE_WAIT` (default `180`s) for kubelet finalizers and the `local-path` StorageClass' default `reclaimPolicy=Delete` to auto-remove the bound PVs. This prevents 90% of the "dangling orphan PV" problem we see after uninstall.
+2. **Namespace delete**: Removes the namespace object itself.
+3. **Released-PV garbage collect pass**: Walks **all** cluster PVs and deletes any in phase `Released` or `Failed` whose `.spec.claimRef.namespace` points to the just-deleted namespace. This catches the remaining 10%: CRD operators that patch PV reclaimPolicy to `Retain` (notably ECK, StarRocks operator, some older charts).
+
+For OpenObserve specifically, `PURGE_DATA=1` also deletes the actual S3 bucket (not just PVCs) using the `MC_HOST_<ALIAS>` env-var credential pattern. Credentials are passed via env (never argv/ps):
+
+```bash
+# credentials are carried in env vars; argv is just the mc rb command
+MC_HOST_LUBAN_MINIO="<MINIO_ROOT_USER>:<MINIO_ROOT_PASSWORD>@minio.<LUBAN_DOMAIN>:9000" \
+  mc rb --force luban-minio/openobserve
+```
+
+…so the MinIO bucket itself gets wiped, not just OO's metadata/SQLite PVCs. If `mc` isn't installed the step gracefully no-ops and warns.
 
 If you only installed base infrastructure, you can remove it with:
 

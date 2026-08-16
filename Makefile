@@ -13,11 +13,12 @@ RESET := \033[0m
 
 .PHONY: help infra devops workspace data-platform observability \
 	cert-manager kubernetes-replicator metrics-server envoy-gateway gateway \
-	argo-workflows argo-cd argo-events kpack harbor jupyterhub keycloak minio starrocks elastic-stack elastic-stack-core \
+	argo-workflows argo-cd argo-events kpack harbor jupyterhub keycloak minio starrocks elastic-stack elastic-stack-core openobserve \
 	cli pack-cli kp-cli helm-cli kubectl-cli argo-cli \
-	uninstall-infra uninstall-devops uninstall-workspace uninstall-data-platform uninstall-observability \
+	uninstall-infra uninstall-devops uninstall-workspace uninstall-data-platform uninstall-observability uninstall-observability-all \
 	uninstall-cert-manager uninstall-kubernetes-replicator uninstall-metrics-server uninstall-envoy-gateway uninstall-gateway \
-	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-keycloak uninstall-minio uninstall-starrocks uninstall-elastic-stack
+	uninstall-argo-workflows uninstall-argo-cd uninstall-argo-events uninstall-kpack uninstall-harbor uninstall-jupyterhub uninstall-keycloak uninstall-minio uninstall-starrocks uninstall-elastic-stack uninstall-openobserve \
+	prune clean
 
 help:
 	@echo "$(BOLD)Usage:$(RESET)"
@@ -25,9 +26,10 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make devops" "Install core CI/CD and gateway stack"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make workspace" "Install workspace stack (JupyterHub)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make data-platform" "Install data platform stack (MinIO, StarRocks)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make observability" "Install observability stack (Elastic Stack)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make observability" "Install observability stack (Elastic Stack APM). OpenObserve is a separate lightweight alternative (make openobserve)."
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make elastic-stack" "Install Elastic Stack + Fleet-managed APM"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make elastic-stack-core" "Install Elasticsearch + Kibana only"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make openobserve" "Install OpenObserve observability (MinIO S3-backed)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make cert-manager" "Install cert-manager (Chart $(CERT_MANAGER_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make kubernetes-replicator" "Install Kubernetes Replicator (Chart $(KUBERNETES_REPLICATOR_CHART_VERSION))"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make metrics-server" "Install metrics-server (Chart $(METRICS_SERVER_CHART_VERSION))"
@@ -53,7 +55,8 @@ help:
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-devops" "Uninstall core CI/CD stack (keeps infra)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-workspace" "Uninstall workspace stack (JupyterHub)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-data-platform" "Uninstall data platform stack (StarRocks, MinIO)"
-	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-observability" "Uninstall observability stack (keeps infra)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-observability" "Uninstall observability stack (Elastic Stack only — matches make observability)"
+	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-observability-all" "Uninstall ALL observability (Elastic Stack + OpenObserve)"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-cert-manager" "Uninstall cert-manager"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-metrics-server" "Uninstall metrics-server"
 	@printf "  $(CYAN)%-35s$(RESET) %s\n" "make uninstall-envoy-gateway" "Uninstall Envoy Gateway"
@@ -100,6 +103,8 @@ help:
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "KUBERNETES_REPLICATOR_CHART_VERSION" "Kubernetes Replicator chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "METRICS_SERVER_CHART_VERSION" "metrics-server chart version"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "HARBOR_CHART_VERSION" "Harbor chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "OPENOBSERVE_CHART_VERSION" "OpenObserve chart version"
+	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "OPENOBSERVE_NAMESPACE" "Namespace for OpenObserve"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "K8S_DOMAIN" "Base domain for ingress hosts"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_WORKFLOWS_HOST" "Hostname for Argo Workflows UI"
 	@printf "  $(YELLOW)%-35s$(RESET) %s\n" "ARGO_CD_HOST" "Hostname for Argo CD UI"
@@ -195,6 +200,10 @@ elastic-stack-core: infra
 	@echo "=== Installing Elastic Stack (Elasticsearch + Kibana) ==="
 	@$(MAKE) -C elastic-stack install
 
+openobserve: infra
+	@echo "=== Installing OpenObserve observability (MinIO S3-backed) ==="
+	@$(MAKE) -C openobserve install
+
 
 cli:
 	@echo "=== Installing all CLIs ==="
@@ -238,9 +247,15 @@ uninstall-data-platform: uninstall-starrocks uninstall-minio
 
 uninstall-observability: uninstall-elastic-stack
 
+uninstall-observability-all: uninstall-elastic-stack uninstall-openobserve
+
 uninstall-elastic-stack:
 	@echo "=== Uninstalling Elastic Stack ==="
 	@$(MAKE) -C elastic-stack uninstall
+
+uninstall-openobserve:
+	@echo "=== Uninstalling OpenObserve ==="
+	@$(MAKE) -C openobserve uninstall
 
 uninstall-harbor:
 	@echo "=== Uninstalling Harbor ==="
